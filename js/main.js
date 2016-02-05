@@ -4,7 +4,7 @@
  Dependencies: jQuery, OpenWeatherMap API
  Author: Carlos March
  Author URL: http://carlosmarch.es
- Date Created: 5 feb, 2016
+ Date: Created: 5 feb, 2016
  Version : 2.0
  Licensed under the MIT license
  */
@@ -16,7 +16,7 @@ var development = true;
 
 
 $( document ).ready(function() {
-    development == false? initApp(): initDevelopment();
+    development == false? initApp(): initDevelopment(-58.377232, -34.613152 );
 });
 
 
@@ -26,14 +26,19 @@ $( document ).ready(function() {
  * Creates random data for testing purposes
  *
  * */
-function initDevelopment(){
-
+function initDevelopment(lat,long){
+    if (lat && long){
+        var position = ' { "coords": { "longitude": '+lat+', "latitude": '+long+' } }';
+        var json = JSON.parse(position);
+        success(json);
+        return
+    }
     var date            = new Date(2016, 0, 1, 7, 30);//y m d h min
     var hour            = randRange(1, 24);
     var celsius         = randRange(0, 40);
     var cityCountry     = 'NYC, USA';
     var cases = [];
-    $.each(iconsData, function (key, data) {
+    $.each(iconsData, function (key) {
         cases.push(key)
     });
 
@@ -124,7 +129,7 @@ function openWeatherCall(lat, long){
  *
  * */
 function error(msg) {
-    cosole.log(msg);
+    //console.log(msg);
     $('.text-bottom').prepend('<span>'+msg == 'string' ? msg : ""+'</span>').addClass('animated fadeInUp');
 }
 
@@ -136,7 +141,6 @@ function error(msg) {
  *
  * */
 function success(position) {
-
     $.when(
 
         openWeatherCall(position.coords.latitude, position.coords.longitude)
