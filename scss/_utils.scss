@@ -1,0 +1,416 @@
+/* -------------------------------------------------------------
+  Scss Useful Mixins Library!
+  By: Carlos March, http://www.carlosmarch.es, @carlosmarch__
+  @git https://github.com/recortex/scss-mixins/blob/master/scss-useful-mixins.scss
+  List of Scss Mixins File to be @imported @included @extended
+------------------------------------------------------------- */
+
+/// Adds a browser prefix to the property
+/// @param {*} $property Property
+/// @param {*} $value Value
+/// Usage @include css3-prefix(transition, all 0.2s ease-in);
+
+@mixin css3-prefix($property, $value) {
+  -webkit-#{$property}: #{$value};
+  -khtml-#{$property}: #{$value};
+  -moz-#{$property}: #{$value};
+  -ms-#{$property}: #{$value};
+  -o-#{$property}: #{$value};
+  #{$property}: #{$value};
+}
+
+
+
+/// Adds a transition cross-browser
+/// @param {Args} $property [all 0.2s ease-in] - Property Time Ease
+/// @require {mixin} css3-prefix
+/// Usage @include transition(all 0.2s ease-in)
+
+@mixin transition($property) {
+  @include css3-prefix('transition', $property );
+}
+
+
+
+/// Rounded corners
+/// @param {Radius} $radius [4px 4px 4px 4px] - Top-Left Top-Right Bottom-Right Bottom-Left
+/// @require {mixin} css3-prefix
+/// Usage @include rounded-corners($radius: 4px 4px 4px 4px);
+
+@mixin rounded-corners($radius: 0 0 0 0) {
+  $top-left: nth($radius, 1);
+  $top-right: nth($radius, 2);
+  $bottom-right: nth($radius, 3);
+  $bottom-left: nth($radius, 4);
+
+  @include css3-prefix('border-top-left-radius',$top-left );
+  @include css3-prefix('border-top-right-radius',$top-right );
+  @include css3-prefix('border-bottom-right-radius',$bottom-right );
+  @include css3-prefix('border-bottom-left-radius',$bottom-left );
+}
+
+
+/// Buttons
+/// @param {Color} $bg [#333] - Color
+/// @param {Args} $radius [15px 15px 15px 15px] - Radius
+/// @require {mixin} rounded-corners
+/// Usage @include button(#333, 15px 15px 15px 15px);
+
+@mixin button($bg: #333333, $radius: 0px 0px 0px 0px) {
+  background-color: $bg;
+  border: 1px solid mix(black, $bg, 2%);
+  padding: .25em .5em;
+  text-align: center;
+  @include rounded-corners($radius);
+
+  &:hover {
+    cursor: pointer;
+    background-color: mix(black, $bg, 10%);
+    border-color: mix(black, $bg, 14%);
+  }
+}
+
+
+
+/// Generates a css class from every element in nested list
+/// @param {Property Value} [blue #00CAFF] - Name Color
+
+$colors : blue #00CAFF, deepblue #445D95;
+
+@each $color in $colors {
+  $name : nth($color, 1);
+  $hex : nth($color, 2);
+  .cl-#{$name}{ color: $hex;}
+  .cl-#{$name}-dark{ color: darken($hex, 20%);}
+  .bg-#{$name}{background: $hex;}
+  .bg-#{$name}-dark{background: darken($hex, 20%);}
+  .button-#{$name} {@include button($hex);}
+}
+
+
+
+/// Set a rem font size with pixel fallback
+/// @param {Size} $size [14px] - Size
+/// Usage @include font-size(14px);
+
+@function calculateRem($size) {
+  $remSize: $size / 16px;
+  @return $remSize * 1rem;
+}
+@mixin font-size($size) {
+  font-size: $size;
+  font-size: calculateRem($size);
+}
+
+
+
+/// Breakpoints
+/// @param {Point} [large] - xxlarge / large / medium / small
+/// Usage @include breakpoint(small) { width: 95%; }
+
+@mixin breakpoint($point) {
+  @if $point == xxlarge {
+    @media (max-width: 1920px) { @content; }
+  }
+  @if $point == large {
+    @media (max-width: 1440px) { @content; }
+  }
+  @else if $point == medium {
+    @media (max-width: 1024px) { @content; }
+  }
+  @else if $point == small {
+    @media (max-width: 640px)  { @content; }
+  }
+}
+
+
+
+/// Clearfix
+/// Usage @include clearfix();
+
+@mixin clearfix() {
+  &:before,
+  &:after {
+    content: "";
+    display: table;
+  }
+  &:after {
+    clear: both;
+  }
+}
+
+
+
+/// Text Truncate
+/// Usage @include text-truncate;
+
+@mixin text-truncate {
+  text-overflow: ellipsis;
+  vertical-align: top;
+  white-space: nowrap;
+  overflow: hidden;
+  display: inline-block;
+}
+
+
+
+/// Long Shadow XD
+/// @param {color} [rgba(0, 0, 0, 0.4)] - Color
+/// @param {largeness} [160] - Largeness
+/// Usage @include longshadow(#333, 160);
+
+@function makelongshadow($color, $largeness) {
+  $val: 0px 0px $color;
+  @for $i from 1 through $largeness {
+    $val: #{$val}, #{$i}px #{$i}px #{$color};
+  }
+  @return $val;
+}
+
+@mixin longshadow($color, $largeness) {
+  text-shadow: makelongshadow($color, $largeness);
+}
+
+
+
+/// Center Absolute
+/// @param {Position} [position] - Vertical / Horizontal / Both
+/// Usage @include abs-center(both);
+
+@mixin abs-center($position: both) {
+  position: absolute;
+
+  @if $position == 'vertical' {
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+  }
+
+  @else if $position == 'horizontal' {
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    transform: translate(-50%);
+  }
+
+  @else if $position == 'both' {
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+  }
+
+}
+
+
+
+
+/// Block Element
+/// @access public
+/// @param {String} $element - Element's name
+
+@mixin element($element) {
+  &__#{$element} {
+    @content;
+  }
+}
+
+/// Block Modifier
+/// @access public
+/// @param {String} $modifier - Modifier's name
+@mixin modifier($modifier) {
+  &--#{$modifier} {
+    @content;
+  }
+}
+
+/// UsageDEMO @include element('element');
+
+.block {
+  /* CSS declarations for `.block` */
+  @include element('element') {
+    /* CSS declarations for `.block__element` */
+  }
+
+  @include modifier('modifier') {
+    /* CSS declarations for `.block--modifier` */
+
+    @include element('element') {
+      /* CSS declarations for `.block--modifier__element` */
+    }
+  }
+}
+
+
+
+/// Box Shadow
+/// @param {HorizOffset} [0px] - Horizontal Offset
+/// @param {VertOffset} [0px] - Vertical Offset
+/// @param {Blur} [0px] - Blur
+/// @param {Color} [#333] - Color
+/// @require {mixin} css3-prefix
+/// Usage @include box-shadow(0px 0px 0px #333)
+
+@mixin box-shadow($horizOffset, $vertOffset, $blur, $color) {
+  @include css3-prefix('box-shadow', $horizOffset $vertOffset $blur $color );
+  border-collapse: separate;
+}
+
+
+
+/// Opacity
+/// @param {Opactity} [0] - Opacity (0-1)
+/// Usage @include opacity(0.8);
+@mixin opacity($opacity) {
+  opacity: $opacity;
+  $opacity-ie: $opacity * 100;
+  filter: alpha(opacity=$opacity-ie); //IE8
+}
+
+
+
+/// Gradients. Thanks Chris Eppstein!
+/// Convert angle
+/// @author Chris Eppstein
+/// @param {Number} $value - Value to convert
+/// @param {String} $unit - Unit to convert to
+/// @return {Number} Converted angle
+
+/// @Usage
+/// @include linear-gradient(#31B7D7, #EDAC7D);
+/// @include linear-gradient(to right, #E47D7D 0%, #C195D3 50%, #4FB4E8 100%);
+/// @include linear-gradient(42deg, #B58234 0%, #D2B545 50%, #D7C04D 50.01%, #FFFFFF 100%);
+
+@function convert-angle($value, $unit) {
+  $convertable-units: deg grad turn rad;
+  $conversion-factors: 1 (10grad/9deg) (1turn/360deg) (3.1415926rad/180deg);
+  @if index($convertable-units, unit($value)) and index($convertable-units, $unit) {
+    @return $value
+             / nth($conversion-factors, index($convertable-units, unit($value)))
+             * nth($conversion-factors, index($convertable-units, $unit));
+  }
+
+  @warn "Cannot convert `#{unit($value)}` to `#{$unit}`.";
+}
+
+/// Test if `$value` is an angle
+/// @param {*} $value - Value to test
+/// @return {Bool}
+@function is-direction($value) {
+  $is-direction: index((to top, to top right, to right top, to right, to bottom right, to right bottom, to bottom, to bottom left, to left bottom, to left, to left top, to top left), $value);
+  $is-angle: type-of($value) == 'number' and index('deg' 'grad' 'turn' 'rad', unit($value));
+
+  @return $is-direction or $is-angle;
+}
+
+/// Convert a direction to legacy syntax
+/// @param {Keyword | Angle} $value - Value to convert
+/// @require {function} is-direction
+/// @require {function} convert-angle
+@function legacy-direction($value) {
+  @if is-direction($value) == false {
+    @warn "Cannot convert `#{$value}` to legacy syntax because it doesn't seem to be an angle or a direction";
+  }
+
+  $conversion-map: (
+          to top          : bottom,
+          to top right    : bottom left,
+          to right top    : left bottom,
+          to right        : left,
+          to bottom right : top left,
+          to right bottom : left top,
+          to bottom       : top,
+          to bottom left  : top right,
+          to left bottom  : right top,
+          to left         : right,
+          to left top     : right bottom,
+          to top left     : bottom right
+  );
+
+  @if map-has-key($conversion-map, $value) {
+    @return map-get($conversion-map, $value);
+  }
+
+  @return 90deg - convert-angle($value, 'deg');
+}
+
+/// Mixin printing a linear-gradient
+/// as well as a plain color fallback
+/// and the `-webkit-` prefixed declaration
+/// @access public
+/// @param {String | List | Angle} $direction - Linear gradient direction
+/// @param {Arglist} $color-stops - List of color-stops composing the gradient
+@mixin linear-gradient($direction, $color-stops...) {
+  @if is-direction($direction) == false {
+    $color-stops: ($direction, $color-stops);
+    $direction: 180deg;
+  }
+
+  background: nth(nth($color-stops, 1), 1);
+  background: -webkit-linear-gradient(legacy-direction($direction), $color-stops);
+  background: linear-gradient($direction, $color-stops);
+}
+
+
+
+/// Webkit Placeholder Styling
+/// @usage @include placeholder-style{ color: lighten(#384047, 70%); };
+@mixin placeholder-style {
+  &::-webkit-input-placeholder {
+    @content;
+  }
+  &:-moz-placeholder {
+    @content;
+  }
+  &::-moz-placeholder {
+    @content;
+  }
+  &:-ms-input-placeholder {
+    @content;
+  }
+  .placeholder {
+    @content;
+  }
+}
+
+/// Webkit Autofill Styling
+/// @param {Color} [#fff] - Bg Color
+/// @param {Color} [#fff] - Text Color
+/// @usage @include autofill-style( #fff, #333 ){ font-size: 12px; };
+
+@mixin autofill-style($bg: #fff, $text: #333){
+  &::-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px $bg inset;
+    -webkit-text-fill-color: $text;
+    @content
+  }
+}
+
+
+
+/// Reset Input & Styling
+/// @require {mixin} placeholder-style;
+$input-types: "textarea, input, input[type='text'], input[type='password'], input[type='date'], input[type='datetime-local'], input[type='month'], input[type='time'], input[type='week'], input[type='email'], input[type='number'], input[type='search'], input[type='tel'], input[type='url']";
+#{$input-types}{
+  margin: 0;
+  outline: 0;
+  border: 0;
+  -webkit-appearance: none;
+  box-shadow: 0;
+  box-sizing: border-box;
+  background-color: lighten(#384047, 70%);
+  border: 1px solid lighten(#384047, 60%);
+
+  &:focus {
+    background-color: #fff;
+    border: 1px solid lighten(#384047, 60%);
+  }
+  @include placeholder-style {
+
+  }
+  @include autofill-style( #fff, #333 ){
+
+  }
+}

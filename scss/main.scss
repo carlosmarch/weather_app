@@ -1,0 +1,626 @@
+// Google Fonts
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,600,600italic,700,700italic,800,800italic|Montserrat:400,700);
+
+@import 'utils';
+
+$black    : #323232;
+$grey     : #AFAFAF;
+$ui-grey  : #f2f2f2;
+$yellow   : #E3D153;
+$purple   : #3e313c;
+$pink     : #E292A3;
+
+$text     : #ffffff;
+$bg-main  : $black;
+
+
+
+
+
+// ======================================================================
+// COMMON CLASSES
+// ======================================================================
+.relative{position: relative;}
+.hide{display:none}
+.cup{cursor: pointer;}
+.centered{display: block; margin: 0 auto;}
+.text-center{text-align: center}
+.no-select{@include css3-prefix(user-select, none)}
+.uppercase{text-transform: uppercase;}
+.capitalize {text-transform: capitalize;  }
+.block{display: block}
+
+
+// ======================================================================
+// STRUCTURE
+// ======================================================================
+body{
+  overflow: hidden;
+
+  margin: 0;
+  padding: 0;
+  //font-family: 'Open Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: $bg-main;
+  background-size: cover;
+  width: 100%;
+  height: 100vh;
+  @include transition(all 0.2s ease-in)
+}
+
+.content{
+  padding-top: 320px;
+  text-align: center;
+  margin: 0 auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-right: -50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  height: 100%;
+  @include breakpoint(small) {
+    padding-top: 150px;
+  }
+}
+
+
+// ======================================================================
+// TEXT
+// ======================================================================
+.text-top{
+  @extend .block;
+  @extend .uppercase;
+  margin: 40px;
+  color: $text;
+  min-height: 19px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+.text-bottom{
+  @extend .block;
+  @extend .uppercase;
+  margin: 40px;
+  color: $text;
+  min-height: 35px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  > span{
+    display:block;
+    margin-bottom: 5px;
+  }
+}
+
+.temperature{
+  @extend .block;
+  font-size: 140px;
+  color: $text;
+  font-weight: 200;
+  @extend .relative;
+  mix-blend-mode: exclusion;
+  > span{
+    font-size: 70px;
+    vertical-align: super;
+  }
+}
+.domlog{
+  position: absolute;
+  bottom: 10px;
+  font-size: 8px;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+
+// ======================================================================
+// ENVIRONMENT
+// ======================================================================
+.environment{
+  width: 100%;
+  height: 100%;
+}
+.environment__top{
+  z-index: 100;
+  position: absolute;
+}
+.environment__bottom{
+  z-index: -1;
+  position: absolute;
+}
+
+// ======================================================================
+// ICONS WEAHER
+// ======================================================================
+$icon-height: 100px;
+$icon-width: $icon-height;
+
+.icon-container{
+  position: relative;
+  width: $icon-width;
+  height: $icon-height;
+  display: block;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.sun{
+  background: #fff;
+  display: block;
+  width: $icon-width;
+  height: $icon-height;
+  border-radius: $icon-width/2;
+  position: absolute;
+  z-index: 1;
+  opacity: 1;
+}
+
+.moon{
+  box-shadow: inset 0 0 0px 6px rgb(255, 255, 255);
+  background: rgba(255, 255, 255, 0.2);
+  display: block;
+  width: $icon-width;
+  height: $icon-height;
+  border-radius: $icon-width/2;
+  position: absolute;
+  z-index: 1;
+  opacity: 1;
+  -webkit-animation: opacityMoon 3s ease-out;
+  -moz-animation: opacityMoon 3s ease-out;
+  animation: opacityMoon 3s ease-out;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+}
+
+
+
+// ======================================================================
+// WEATHER  EFFECTS
+// ======================================================================
+.shining{
+  box-shadow: 0px 0px 100px #fff;
+}
+.sun-pulse{
+  background: #fff;
+  position: absolute;
+  -webkit-animation: pulseAnim 3s ease-out;
+  -moz-animation: pulseAnim 3s ease-out;
+  animation: pulseAnim 3s ease-out;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+
+  width: $icon-width;
+  height: $icon-height;
+  border-radius: $icon-width/2;
+  &:nth-child(3) {
+    @include css3-prefix(animation-delay, 1s);
+  }
+  &:nth-child(4) {
+    @include css3-prefix(animation-delay, 2s);
+  }
+}
+.sun-pulse2x{
+  background: #fff;
+  position: absolute;
+  -webkit-animation: pulseAnim2x 2.5s ease-out;
+  -moz-animation: pulseAnim2x 2.5s ease-out;
+  animation: pulseAnim2x 2.5s ease-out;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+
+  width: $icon-width;
+  height: $icon-height;
+  border-radius: $icon-width/2;
+  &:nth-child(3) {
+    @include css3-prefix(animation-delay, 1s);
+  }
+  &:nth-child(4) {
+    @include css3-prefix(animation-delay, 2s);
+  }
+}
+
+// ======================================================================
+// STARS EFFECT
+// ======================================================================
+.stars{
+  -webkit-animation: opacityStars 5s linear infinite;
+  -moz-animation: opacityStars 5s linear infinite;
+  animation: opacityStars 5s linear infinite;
+}
+.star{
+  width:5px;
+  height: 5px;
+  position: absolute;
+  //box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.08);
+}
+
+// ======================================================================
+// CLOUDS EFFECT
+// ======================================================================
+.cloud {
+  width: 100%;
+  height: 5px;
+  background: #fff;
+  position: absolute;
+  -webkit-animation: fogy 10s linear infinite;
+  -moz-animation: fogy 10s linear infinite;
+  mix-blend-mode: exclusion;
+  &:nth-child(2) {
+    @include css3-prefix(animation-delay, 1s);
+  }
+  &:nth-child(3) {
+    @include css3-prefix(animation-delay, 2s);
+  }
+  &:nth-child(4) {
+    @include css3-prefix(animation-delay, 3s);
+  }
+  &:nth-child(5) {
+    @include css3-prefix(animation-delay, 4s);
+  }
+}
+
+// ======================================================================
+// RAIN EFFECT
+// ======================================================================
+.drop {
+  background:#ffffff;
+  width:1px;
+  height:5px;
+  position: absolute;
+  bottom:200px;
+  -webkit-animation: fall .63s linear infinite;
+  -moz-animation: fall .63s linear infinite;
+  mix-blend-mode: exclusion;
+}
+
+/* animate the RAIN*/
+@-webkit-keyframes fall {
+  to {margin-top:3000px;}
+}
+@-moz-keyframes fall {
+  to {margin-top:3000px;}
+}
+
+
+// ======================================================================
+// FOG EFFECT
+// ======================================================================
+.fog{
+    width: 100%;
+    height: 150px;
+    position: absolute;
+    -webkit-animation: fogy 5s linear infinite;
+    -moz-animation: fogy 5s linear infinite;
+    animation: fogy 5s linear infinite;
+    mix-blend-mode: exclusion;
+  &:nth-child(2) {
+    @include css3-prefix(animation-delay, 1s);
+  }
+  &:nth-child(3) {
+    @include css3-prefix(animation-delay, 2s);
+  }
+  &:nth-child(4) {
+    @include css3-prefix(animation-delay, 3s);
+  }
+  &:nth-child(5) {
+    @include css3-prefix(animation-delay, 4s);
+  }
+}
+
+// ======================================================================
+// SNOW EFFECT
+// ======================================================================
+
+.snowflake {
+  background: #fff;
+  animation-name: snowing;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-out;
+  border-radius: 10px;
+  position: absolute;
+  &:nth-child(2n){
+    animation-delay: 1.5s;
+  }
+  &:nth-child(3n){
+    animation-delay: 2.3s;
+    animation-duration: 3.3s;
+  }
+  &:nth-child(4n){
+    animation-delay: 0.8s;
+    animation-duration: 3.2s;
+  }
+  &:nth-child(5n){
+    animation-delay: 2.8s;
+  }
+}
+
+// ======================================================================
+// THUNDER EFFECT
+// ======================================================================
+.storm{
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.7;
+}
+.thunder{
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  position: absolute;
+  animation-name: thunderAnim;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-out;
+  background-blend-mode: exclusion;
+  opacity: 0;
+  &:nth-child(2) {
+    @include css3-prefix(animation-delay, 8.5s);
+    @include css3-prefix(animation-duration, 10.5s);
+
+  }
+  &:nth-child(3) {
+    @include css3-prefix(animation-delay, 20.2s);
+    @include css3-prefix(animation-duration, 6.2s);
+  }
+}
+
+
+// ======================================================================
+// ANIMATIONS
+// ======================================================================
+
+//@Todo review cross browser!!
+
+
+/*  pulseAnim  -- animate the SUN PULSE */
+@-moz-keyframes pulseAnim {
+  0% {
+    -moz-transform: scale(0);
+    opacity: 0.0;
+  }
+
+  45% {
+    -moz-transform: scale(0.9);
+    opacity: 0.5;
+  }
+  100% {
+    -moz-transform: scale(1.4);
+    opacity: 0.0;
+  }
+}
+
+@-webkit-keyframes pulseAnim {
+  0% {
+    -webkit-transform: scale(0);
+    opacity: 0.0;
+  }
+
+  45% {
+    -webkit-transform: scale(0.9);
+    opacity: 0.5;
+  }
+  100% {
+    -webkit-transform: scale(1.4);
+    opacity: 0.0;
+  }
+}
+
+
+/*  pulseAnim2x -- animate the SUN PULSE */
+@-moz-keyframes pulseAnim2x {
+  0% {
+    -moz-transform: scale(0);
+    opacity: 0.0;
+  }
+
+  45% {
+    -moz-transform: scale(0.9);
+    opacity: 0.5;
+  }
+  100% {
+    -moz-transform: scale(2.4);
+    opacity: 0.0;
+  }
+}
+
+@-webkit-keyframes pulseAnim2x {
+  0% {
+    -webkit-transform: scale(0);
+    opacity: 0.0;
+  }
+
+  45% {
+    -webkit-transform: scale(0.9);
+    opacity: 0.5;
+  }
+  100% {
+    -webkit-transform: scale(2.4);
+    opacity: 0.0;
+  }
+}
+
+
+/*  opacityMoon  -- animate the MOON */
+@-moz-keyframes opacityMoon {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes opacityMoon {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/*  opacityMoon  -- animate the STARS */
+@-moz-keyframes opacityStars {
+  0%    {opacity: 1;    }
+  21%   {opacity: 0.9;  }
+  50%   {opacity: 0.6;  }
+  50%   {opacity: 1;    }
+  81%   {opacity: 0.5   }
+  100%  {opacity: 1;    }
+}
+
+@-webkit-keyframes opacityStars {
+  0%    {opacity: 1;    }
+  21%   {opacity: 0.9;  }
+  50%   {opacity: 0.6;  }
+  50%   {opacity: 1;    }
+  81%   {opacity: 0.5   }
+  100%  {opacity: 1;    }
+}
+
+/* fogy -- animate the FOG */
+@-webkit-keyframes fogy {
+  0% {margin-top:random(4) + px;}
+  50%{margin-top:'-'+random(4) + px;}
+  100%{margin-top:0px;}
+}
+@-moz-keyframes fogy {
+  0% {margin-top:random(4) + px;}
+  50%{margin-top:'-'+random(4) + px;}
+  100%{margin-top:0px;}
+}
+
+
+/*  snowing -- animate the SNOW */
+@-moz-keyframes snowing {
+  0%{
+    fill-opacity: 1;
+    opacity:0;
+    margin-left: 0px;
+  }
+  25%{
+    margin-left: -5px;
+  }
+  75%{
+    margin-left: 5px;
+  }
+  100% {
+    fill-opacity: 0;
+    opacity:1;
+    -moz-transform: translateY(200px);
+    margin-left: 0px;
+  }
+}
+
+@-webkit-keyframes snowing {
+  0%{
+    fill-opacity: 1;
+    opacity:0;
+    margin-left: 0px;
+  }
+  25%{
+    margin-left: -5px;
+  }
+  75%{
+    margin-left: 5px;
+  }
+  100% {
+    fill-opacity: 0;
+    opacity:1;
+    -webkit-transform: translateY(200px);
+    margin-left: 0px;
+  }
+}
+
+@keyframes snowing {
+  0%{
+    fill-opacity: 1;
+    opacity:0;
+    margin-left: 0px;
+  }
+  25%{
+    margin-left: -5px;
+  }
+  75%{
+    margin-left: 5px;
+  }
+  100% {
+    fill-opacity: 0;
+    opacity:1;
+    transform: translateY(200px);
+    margin-left: 0px;
+  }
+}
+
+/* thunderAnim -- animate the THUNDER */
+@-webkit-keyframes thunderAnim {
+  0% {opacity:0;}
+  50%{opacity:0;}
+  51%{opacity:1;}
+  52%{opacity:0;}
+  54%{opacity:0;}
+  55%{opacity:1;}
+  56%{opacity:0.5;}
+  57%{opacity:1;}
+  58%{opacity:0;}
+  80%{opacity:0;}
+  81%{opacity:1;}
+  85%{opacity:0;}
+  100%{opacity: 0;}
+}
+@-moz-keyframes thunderAnim {
+  0% {opacity:0;}
+  50%{opacity:0;}
+  51%{opacity:1;}
+  52%{opacity:0;}
+  54%{opacity:0;}
+  55%{opacity:1;}
+  56%{opacity:0.5;}
+  57%{opacity:1;}
+  58%{opacity:0;}
+  80%{opacity:0;}
+  81%{opacity:1;}
+  85%{opacity:0;}
+  100%{opacity: 0;}
+}
+@keyframes thunderAnim {
+  0% {opacity:0;}
+  50%{opacity:0;}
+  51%{opacity:1;}
+  52%{opacity:0;}
+  54%{opacity:0;}
+  55%{opacity:1;}
+  56%{opacity:0.5;}
+  57%{opacity:1;}
+  58%{opacity:0;}
+  80%{opacity:0;}
+  81%{opacity:1;}
+  85%{opacity:0;}
+  100%{opacity: 0;}
+}
