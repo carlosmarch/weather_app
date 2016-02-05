@@ -1,8 +1,7 @@
 
 /* This object manages environment conditions.
  * Maps iconText with a function that creates environment
- * @usage environment['iconName']()
- * @thanks to
+ * @thanks to @tbranyen
  * https://gist.github.com/tbranyen/62d974681dea8ee0caa1
  */
 
