@@ -2,12 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e0c80b16-b9f0-4fae-a77b-210e52e9db86" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/screenshots/1.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/screenshots/2.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/screenshots/3.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/screenshots/4.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/screenshots/5.png" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/main.js" afterPath="$PROJECT_DIR$/js/main.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="timecast.iws" />
@@ -62,15 +57,28 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="main.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/js/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.19101124" vertical-offset="0" max-vertical-offset="12291">
+            <state vertical-scroll-proportion="-3.7777777" vertical-offset="0" max-vertical-offset="12291">
               <caret line="6" column="27" selection-start-line="6" selection-start-column="16" selection-end-line="6" selection-end-column="27" />
               <folding>
-                <marker date="1454844646000" expanded="true" signature="10919:10954" placeholder="..." />
+                <marker date="1454846004000" expanded="true" signature="10919:10954" placeholder="..." />
               </folding>
             </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="README.md" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/README.md">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.42664093" vertical-offset="0" max-vertical-offset="518">
+              <caret line="13" column="47" selection-start-line="13" selection-start-column="47" selection-end-line="13" selection-end-column="47" />
+              <folding />
+            </state>
+          </provider>
+          <provider editor-type-id="MarkdownPreviewEditor">
+            <state />
           </provider>
         </entry>
       </file>
@@ -110,6 +118,7 @@
         <option value="$PROJECT_DIR$/scss/main.scss" />
         <option value="$PROJECT_DIR$/index.html" />
         <option value="$PROJECT_DIR$/js/main.js" />
+        <option value="$PROJECT_DIR$/README.md" />
       </list>
     </option>
   </component>
@@ -262,18 +271,26 @@
       <option name="number" value="Default" />
       <updated>1454103339244</updated>
     </task>
+    <task id="LOCAL-00001" summary="images">
+      <created>1454846228491</created>
+      <option name="number" value="00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1454846228491</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="217" y="24" width="1611" height="970" extended-state="0" />
     <editor active="false" />
     <layout>
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3272727" sideWeight="0.49968886" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.26666668" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.26666668" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3284091" sideWeight="0.49968886" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -303,7 +320,8 @@
     <option name="myTodoPanelSettings">
       <TodoPanelSettings />
     </option>
-    <option name="LAST_COMMIT_MESSAGE" value="" />
+    <MESSAGE value="images" />
+    <option name="LAST_COMMIT_MESSAGE" value="images" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -339,7 +357,7 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="12155">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1454844646000" expanded="true" signature="10919:10954" placeholder="..." />
+            <marker date="1454846004000" expanded="true" signature="10919:10954" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -381,7 +399,7 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="799" max-vertical-offset="12087">
           <caret line="69" column="0" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
           <folding>
-            <marker date="1454844646000" expanded="true" signature="10919:10954" placeholder="..." />
+            <marker date="1454846004000" expanded="true" signature="10919:10954" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -431,7 +449,7 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="12257">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1454844646000" expanded="true" signature="10919:10954" placeholder="..." />
+            <marker date="1454846004000" expanded="true" signature="10919:10954" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -473,7 +491,7 @@
         <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="12257">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1454844646000" expanded="true" signature="10919:10954" placeholder="..." />
+            <marker date="1454846004000" expanded="true" signature="10919:10954" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -587,12 +605,23 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/js/main.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.19101124" vertical-offset="0" max-vertical-offset="12291">
+        <state vertical-scroll-proportion="-3.7777777" vertical-offset="0" max-vertical-offset="12291">
           <caret line="6" column="27" selection-start-line="6" selection-start-column="16" selection-end-line="6" selection-end-column="27" />
           <folding>
-            <marker date="1454844646000" expanded="true" signature="10919:10954" placeholder="..." />
+            <marker date="1454846004000" expanded="true" signature="10919:10954" placeholder="..." />
           </folding>
         </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.42664093" vertical-offset="0" max-vertical-offset="518">
+          <caret line="13" column="47" selection-start-line="13" selection-start-column="47" selection-end-line="13" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+      <provider editor-type-id="MarkdownPreviewEditor">
+        <state />
       </provider>
     </entry>
   </component>
