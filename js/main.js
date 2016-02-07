@@ -65,7 +65,7 @@ function initDevelopment(lat,long){
     makeDayOrNight(returnDayNightIcon(dayNight[randDayNight]));
     drawBackground(celsius, hour);
     iconIDtoEnvironment(iconID);
-    $('body').append('<div class="domlog"></div>');
+    //$('body').append('<div class="domlog"></div>');
     $('.domlog').append(
         'HOUR = '+hour+ ' | ' +
         'TEMPERATURE = '+celsius+  ' | ' +
@@ -427,7 +427,7 @@ function createClouds(numClouds){
     // @usage createClouds(2)
 
     //create darken
-    var darken = '<div class="environment environment__middle" style="background: rgba(51, 51, 51, 0.30); "></div>';
+    var darken = '<div class="environment environment__middle" style="background: rgba(51, 51, 51, 0.2); "></div>';
     $('.environment__bottom').prepend(darken);
 
     // Create Sky for CLOUDS
