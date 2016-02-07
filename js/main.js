@@ -16,7 +16,7 @@ var development = true;
 
 
 $( document ).ready(function() {
-    development == false? initApp(): initDevelopment(-58.377232, -34.613152 );
+    development == false? initApp(): initDevelopment();
 });
 
 
@@ -27,12 +27,14 @@ $( document ).ready(function() {
  *
  * */
 function initDevelopment(lat,long){
+    //if lat long call to api
     if (lat && long){
         var position = ' { "coords": { "longitude": '+lat+', "latitude": '+long+' } }';
         var json = JSON.parse(position);
         success(json);
         return
     }
+    //create fake data
     var date            = new Date(2016, 0, 1, 7, 30);//y m d h min
     var hour            = randRange(1, 24);
     var celsius         = randRange(0, 40);
@@ -90,6 +92,8 @@ function initApp() {
     getLocation();
 }
 
+
+
 /* This function inits the APP - By demanding location via HTML5 API
  * on success
  * function openWeatherCall
@@ -113,7 +117,7 @@ function getLocation(){
 
 function openWeatherCall(lat, long){
 
-    var openWeatherAPI_Url = 'http://api.openweathermap.org/data/2.5/weather?lat='+lat+'&lon='+long+'&appid='+apikey+'';
+    var openWeatherAPI_Url = 'http://api.openweathermap.org/data/2.5/weather?lat='+lat+'&lon='+long+'&units=metric&appid='+apikey+'';
 
     return $.ajax({
         url: openWeatherAPI_Url,
@@ -149,7 +153,7 @@ function success(position) {
 
         //result from openweather api
 
-        var result = result[0];
+        var result          = result[0];
 
         var city            = result.name;
         var country         = result.sys.country;
@@ -159,14 +163,14 @@ function success(position) {
         var iconCode        = result.weather[0].icon;
         var iconText        = result.weather[0].main;
         var iconTextLarge   = result.weather[0].description;
-        var farenheit       = result.main.temp;
+        var celsius         = result.main.temp;
 
         //custom variables for managing interesting data
         var cityCountry     = city+', '+country;
         var date            = new Date();
 
 
-        //console.log(result);
+        console.log(result);
 
         //INIT DOM RENDERING
         //Init DOM rendering by fading the website
@@ -180,7 +184,7 @@ function success(position) {
 
         //DOM data related to environment
         makeDayOrNight(returnDayNightIcon(iconCode));
-        drawBackground(farenheitToCelsius(farenheit), returnHour());
+        drawBackground(celsius, returnHour());
         iconIDtoEnvironment(iconID);
 
     });
@@ -421,6 +425,10 @@ function createClouds(numClouds){
     // function to generate CLOUDS
     // @param integer - Total Number of Clouds
     // @usage createClouds(2)
+
+    //create darken
+    var darken = '<div class="environment environment__middle" style="background: rgba(51, 51, 51, 0.30); "></div>';
+    $('.environment__bottom').prepend(darken);
 
     // Create Sky for CLOUDS
     var clouds = '<div class="clouds"></div>';

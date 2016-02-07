@@ -234,8 +234,12 @@ body {
   z-index: 100;
   position: absolute; }
 
-.environment__bottom {
+.environment__middle {
   z-index: -1;
+  position: absolute; }
+
+.environment__bottom {
+  z-index: -2;
   position: absolute; }
 
 .icon-container {
@@ -588,16 +592,16 @@ body {
 /* fogy -- animate the FOG */
 @-webkit-keyframes fogy {
   0% {
-    margin-top: 4px; }
+    margin-top: 1px; }
   50% {
     margin-top: "-3px"; }
   100% {
     margin-top: 0px; } }
 @-moz-keyframes fogy {
   0% {
-    margin-top: 4px; }
+    margin-top: 3px; }
   50% {
-    margin-top: "-1px"; }
+    margin-top: "-4px"; }
   100% {
     margin-top: 0px; } }
 /*  snowing -- animate the SNOW */

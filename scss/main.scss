@@ -130,8 +130,12 @@ body{
   z-index: 100;
   position: absolute;
 }
-.environment__bottom{
+.environment__middle{
   z-index: -1;
+  position: absolute;
+}
+.environment__bottom{
+  z-index: -2;
   position: absolute;
 }
 
