@@ -1,8 +1,8 @@
-<img src="screenshots/icon128.jpg" width="128"></img>
+<img src="screenshots/Icon128.jpg" width="128"></img>
 # Data visualization Weather App
 Data visualization weather app.  
 *Version 2.0 - 5 feb, 2016
-<img src="screenshots/mockup.png" width="100%"></img>
+<img src="screenshots/mockup.jpg" width="100%"></img>
 
 Take a look at [http://carlosmarch.es/time](http://carlosmarch.es/time)!
 
