@@ -1,4 +1,4 @@
-<img src="screenshots/Icon128.jpg" width="128"></img>
+<img src="screenshots/Icon128.png" width="128"></img>
 # Data visualization Weather App
 Data visualization weather app.  
 *Version 2.0 - 5 feb, 2016
