@@ -9,6 +9,8 @@ Take a look at [http://carlosmarch.es/time](http://carlosmarch.es/time)!
 ## Description
 
 This weather app uses openweather API and geolocation via HTML API. Then it displays a visualization of the weather results.
+Better chrome mobile in mobile :)
+Soon on safari
 
 
 <img src="screenshots/1.png" width="33%"></img>
