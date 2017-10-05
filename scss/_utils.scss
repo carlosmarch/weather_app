@@ -72,23 +72,6 @@
 
 
 
-/// Generates a css class from every element in nested list
-/// @param {Property Value} [blue #00CAFF] - Name Color
-
-$colors : blue #00CAFF, deepblue #445D95;
-
-@each $color in $colors {
-  $name : nth($color, 1);
-  $hex : nth($color, 2);
-  .cl-#{$name}{ color: $hex;}
-  .cl-#{$name}-dark{ color: darken($hex, 20%);}
-  .bg-#{$name}{background: $hex;}
-  .bg-#{$name}-dark{background: darken($hex, 20%);}
-  .button-#{$name} {@include button($hex);}
-}
-
-
-
 /// Set a rem font size with pixel fallback
 /// @param {Size} $size [14px] - Size
 /// Usage @include font-size(14px);

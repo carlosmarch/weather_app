@@ -9,70 +9,32 @@
  Licensed under the MIT license
  */
 
-
-var apikey= '6da2b9398e94b1d868dce91051d30840';
-
+var apikey= '81a514df489540b2ef2a44a3898e9c8f';
 var development = true;
 
+var locationOptions = {
+  enableHighAccuracy: true,
+  timeout: 5000,
+  maximumAge: 60000
+};
 
 $( document ).ready(function() {
     development == false? initApp(): initDevelopment();
 });
 
 
+
 /*
  * INIT FAKE DATA APP
- * No need to call to API
+ * USES API. If api causes problems -> call @initFakeData()
  * Creates random data for testing purposes
  *
  * */
-function initDevelopment(lat,long){
-    //if lat long call to api
-    if (lat && long){
-        var position = ' { "coords": { "longitude": '+lat+', "latitude": '+long+' } }';
-        var json = JSON.parse(position);
-        success(json);
-        return
-    }
-    //create fake data
-    var date            = new Date(2016, 0, 1, 7, 30);//y m d h min
-    var hour            = randRange(1, 24);
-    var celsius         = randRange(0, 40);
-    var cityCountry     = 'NYC, USA';
-    var cases = [];
-    $.each(iconsData, function (key) {
-        cases.push(key)
-    });
-
-    var randomiconKey       = randRange(0, cases.length-1);
-    var iconID              = cases[randomiconKey];
-    var iconTextLarge       = iconsData[cases[randomiconKey]].label;
-    var dayNight            = ['day','night'];
-    var randDayNight        = randRange(0, dayNight.length-1);
-
-
-    //INIT DOM RENDERING
-    //Init DOM rendering by fading the website
-    fadeBody();
-
-    //DOM data related to text
-    //printTemperature(farenheit);
-    printCity(cityCountry);
-    printTime(date);
-    printTextWeather(iconTextLarge);
-
-    //DOM data related to environment
-    makeDayOrNight(returnDayNightIcon(dayNight[randDayNight]));
-    drawBackground(celsius, hour);
-    iconIDtoEnvironment(iconID);
-    //$('body').append('<div class="domlog"></div>');
-    $('.domlog').append(
-        'HOUR = '+hour+ ' | ' +
-        'TEMPERATURE = '+celsius+  ' | ' +
-        'CITY = '+cityCountry+ ' | ' +
-        'ICON = '+iconID
-    );
-
+function initDevelopment(){
+    window.randomCity = cities[randRange(0, cities.length-1)]
+    var position = ' { "coords": { "longitude": '+randomCity.CapitalLatitude+', "latitude": '+randomCity.CapitalLongitude+' } }';
+    var json = JSON.parse(position);
+    success(json);
 }
 
 
@@ -100,14 +62,39 @@ function initApp() {
  * */
 function getLocation(){
     if (navigator.geolocation) {
-        //call openweather with location data
-        navigator.geolocation.getCurrentPosition(success,error);
+        //call success / err
+        navigator.geolocation.getCurrentPosition(success,error, locationOptions);
     } else {
         error('Geolocation not supported')
     }
 };
 
 
+/*
+ * ERROR function from navigator geolocation
+ * Shows message
+ *
+ * */
+function error(msg) {
+    console.log(msg);
+    $('.text-bottom').prepend('<span>'+msg == 'string' ? msg : ""+'</span>').addClass('animated fadeInUp');
+}
+
+
+/*
+ * SUCCESS function from navigator geolocation
+ * Init the app by rendering functions after api call
+ *
+ * */
+function success(position) {
+    //call openweather with location data
+    $.when(
+        openWeatherCall(position.coords.latitude, position.coords.longitude)
+    ).done(function(result){
+        printAppData(result);
+    });
+
+};
 
 /*
  * This function calls to openweather API
@@ -116,9 +103,7 @@ function getLocation(){
  * */
 
 function openWeatherCall(lat, long){
-
     var openWeatherAPI_Url = 'http://api.openweathermap.org/data/2.5/weather?lat='+lat+'&lon='+long+'&units=metric&appid='+apikey+'';
-
     return $.ajax({
         url: openWeatherAPI_Url,
         dataType: 'json'
@@ -128,68 +113,45 @@ function openWeatherCall(lat, long){
 
 
 /*
- * ERROR function from navigator geolocation
- * Shows message
+ * Print data in DOM
+ * GET FUN!!
  *
  * */
-function error(msg) {
-    //console.log(msg);
-    $('.text-bottom').prepend('<span>'+msg == 'string' ? msg : ""+'</span>').addClass('animated fadeInUp');
-}
+function printAppData(result){
+  //result from openweather api
+  console.log(result);
 
+  var result          = result[0];
+  var city            = result.name || randomCity.CapitalName;
+  var country         = result.sys.country || randomCity.CountryName;
+  var sunrise         = result.sys.sunrise;
+  var sunset          = result.sys.sunset;
+  var iconID          = result.weather[0].id;
+  var iconCode        = result.weather[0].icon;
+  var iconText        = result.weather[0].main;
+  var iconTextLarge   = result.weather[0].description;
+  var celsius         = result.main.temp;
 
+  //custom variables for managing interesting data
+  var cityCountry     = city+', '+country;
+  var date            = new Date();
 
-/*
- * SUCCESS function from navigator geolocation
- * Init the app by rendering functions after api call
- *
- * */
-function success(position) {
-    $.when(
+  //INIT DOM RENDERING
+  //Init DOM rendering by fading the website
+  fadeBody();
 
-        openWeatherCall(position.coords.latitude, position.coords.longitude)
+  //DOM data related to text
+  //printTemperature(farenheit);
+  printCity(cityCountry);
+  printTime(date);
+  printTextWeather(iconTextLarge);
 
-    ).done(function(result){
+  //DOM data related to environment
+  makeDayOrNight(returnDayNightIcon(iconCode));
+  drawBackground(celsius, returnHour());
+  iconIDtoEnvironment(iconID);
+};
 
-        //result from openweather api
-
-        var result          = result[0];
-
-        var city            = result.name;
-        var country         = result.sys.country;
-        var sunrise         = result.sys.sunrise;
-        var sunset          = result.sys.sunset;
-        var iconID          = result.weather[0].id;
-        var iconCode        = result.weather[0].icon;
-        var iconText        = result.weather[0].main;
-        var iconTextLarge   = result.weather[0].description;
-        var celsius         = result.main.temp;
-
-        //custom variables for managing interesting data
-        var cityCountry     = city+', '+country;
-        var date            = new Date();
-
-
-        console.log(result);
-
-        //INIT DOM RENDERING
-        //Init DOM rendering by fading the website
-        fadeBody();
-
-        //DOM data related to text
-        //printTemperature(farenheit);
-        printCity(cityCountry);
-        printTime(date);
-        printTextWeather(iconTextLarge);
-
-        //DOM data related to environment
-        makeDayOrNight(returnDayNightIcon(iconCode));
-        drawBackground(celsius, returnHour());
-        iconIDtoEnvironment(iconID);
-
-    });
-
-}
 
 
 
@@ -713,5 +675,53 @@ function fadeBody(){
 
 
 
+function createloader(){
+    // function to generate Pulse for the sun
+    // @param integer - Total Number of pulse
+    var numPulse = 2;
+    for( i=0;i<numPulse;i++) {
+        $('body').append('<div id="loader" class="sun-pulse2x"></div>');
+    }
+}
 
 
+/*
+* DEVELOPMENT ALL FAKE
+*/
+
+function initFakeData(){
+  //create fake random data NO API
+  var date            = new Date(2016, 0, 1, 7, 30);//y m d h min
+  var hour            = randRange(1, 24);
+  var celsius         = randRange(0, 40);
+  var cityCountry     = cities[randRange(0, cities.length-1)].CapitalName;
+  var cases = [];
+  $.each(iconsData, function (key) {
+      cases.push(key)
+  });
+  var randomiconKey       = randRange(0, cases.length-1);
+  var iconID              = cases[randomiconKey];
+  var iconTextLarge       = iconsData[cases[randomiconKey]].label;
+  var dayNight            = ['day','night'];
+  var randDayNight        = randRange(0, dayNight.length-1);
+  //INIT DOM RENDERING
+  //Init DOM rendering by fading the website
+  fadeBody();
+  //DOM data related to text
+  //printTemperature(farenheit);
+  printCity(cityCountry);
+  printTime(date);
+  printTextWeather(iconTextLarge);
+  //DOM data related to environment
+  makeDayOrNight(returnDayNightIcon(dayNight[randDayNight]));
+  drawBackground(celsius, hour);
+  iconIDtoEnvironment(iconID);
+  $('body').append('<div class="domlog"></div>');
+  $('.domlog').append(
+      'DEV = TRUE | ' +
+      'HOUR = '+hour+ ' | ' +
+      'TEMPERATURE = '+celsius+  ' | ' +
+      'CITY = '+cityCountry+ ' | ' +
+      'ICON = '+iconID
+  );
+}
