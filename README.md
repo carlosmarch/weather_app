@@ -4,13 +4,12 @@ Data visualization weather app.
 *Version 2.0 - 5 feb, 2016
 <img src="screenshots/mockup.jpg" width="100%"></img>
 
-Take a look at [http://carlosmarch.es/time](http://carlosmarch.es/time)!
+Take a look at [http://time.carlosmarch.es/](http://time.carlosmarch.es/)!
 
 ## Description
 
 This weather app uses openweather API and geolocation via HTML API. Then it displays a visualization of the weather results.
-Better chrome mobile in mobile :)
-Soon on safari
+Better chrome in mobile :)
 
 
 <img src="screenshots/1.png" width="33%"></img>
