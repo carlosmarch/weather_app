@@ -84,6 +84,11 @@ export function getPosition() {
 
 async function getJSON(url, signal) {
   const res = await fetch(url, { signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    // Open-Meteo explains bad requests: {"error": true, "reason": "..."}
+    let reason = '';
+    try { reason = (await res.json()).reason || ''; } catch {}
+    throw new Error(`HTTP ${res.status}${reason ? ` · ${reason}` : ''}`);
+  }
   return res.json();
 }

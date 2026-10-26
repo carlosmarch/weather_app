@@ -119,12 +119,21 @@ async function loadPlace(place, { share = true, remember = false } = {}) {
   if (share) shareURL(place);
   setLoading(true);
 
+  let forecast, label;
   try {
-    const [forecast, label] = await Promise.all([
+    [forecast, label] = await Promise.all([
       getForecast(place.lat, place.lon),
       place.label ? place.label : reverseGeocode(place.lat, place.lon),
     ]);
-    if (state.place !== place) return; // a newer request won
+  } catch (err) {
+    console.error(err);
+    if (state.place !== place) return;
+    return showError(navigator.onLine ? 'no signal' : 'offline', err);
+  }
+  if (state.place !== place) return; // a newer request won
+
+  // Drawing errors are bugs, not connection problems: say so
+  try {
     place.label = label || formatCoords(place);
     state.forecast = forecast;
     state.selected = 0;
@@ -136,8 +145,7 @@ async function loadPlace(place, { share = true, remember = false } = {}) {
     scheduleRefresh();
   } catch (err) {
     console.error(err);
-    if (state.place !== place) return;
-    showError(navigator.onLine ? 'no signal' : 'offline');
+    showError('something broke', err);
   }
 }
 
@@ -179,6 +187,7 @@ function render() {
   el.condition.classList.remove('is-status');
   setText(el.condition, cond.label, 'animate-down', changed);
   el.city.textContent = state.place.label;
+  el.date.classList.remove('is-detail');
   el.date.textContent = `${DAYS[local.getUTCDay()]}, ${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]}`;
   renderTemp(h.temp);
   el.label.textContent = `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°`;
@@ -304,14 +313,16 @@ function setLoading(on) {
   state.iconKey = '';
 }
 
-function showError(msg) {
+function showError(msg, err) {
   document.body.classList.remove('is-loading');
   el.icon.innerHTML = '<div class="icon-empty"></div>';
   state.iconKey = '';
   state.lastKey = '';
   el.condition.classList.remove('is-status');
   setText(el.condition, msg, 'animate-down', true);
-  el.date.textContent = '';
+  // the actual reason, small, so it can be reported
+  el.date.textContent = err ? String(err.message || err).slice(0, 120) : '';
+  el.date.classList.toggle('is-detail', !!err);
   el.timeline.hidden = true;
   el.temp.hidden = true;
   el.retry.hidden = false;

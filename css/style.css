@@ -175,6 +175,15 @@ button {
 
 .text-bottom > span { display: block; margin-bottom: 6px; }
 .text-bottom > span:last-child { color: var(--ink-soft); }
+.text-bottom > .is-detail {
+  max-width: 34ch;
+  margin: 14px auto 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
 
 .temperature {
   margin-top: clamp(24px, 5vh, 36px);
