@@ -390,25 +390,33 @@ function markSelected() {
   el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${Math.round(h.temp)} degrees, ${getCondition(h.code).label}`);
 }
 
-/* Dock-style magnification: bars swell with their distance to the pointer */
+/* Dock-style magnification: bars near the pointer grow taller and wider,
+   pushing their neighbours aside. Measured on the un-magnified layout so
+   the effect doesn't feed back into itself */
 function magnify(e) {
   const bars = el.track.children;
   if (!e) {
-    for (const b of bars) b.style.removeProperty('--mag');
+    for (const b of bars) b.style.removeProperty('--mag'), b.style.removeProperty('--w');
     return;
   }
   const r = el.track.getBoundingClientRect();
   const pos = ((e.clientX - r.left) / r.width) * bars.length - 0.5;
   for (let i = 0; i < bars.length; i++) {
     const d = i - pos;
-    bars[i].style.setProperty('--mag', (1 + 0.55 * Math.exp(-(d * d) / 4.5)).toFixed(3));
+    const g = Math.exp(-(d * d) / 12.5); // ~2.5 bars either side feel it
+    bars[i].style.setProperty('--mag', (1 + 0.55 * g).toFixed(3));
+    bars[i].style.setProperty('--w', (1 + 1.4 * g).toFixed(3));
   }
 }
 
+/* The bar under the pointer, using the real (magnified) bar positions */
 function indexFromPointer(e) {
-  const r = el.track.getBoundingClientRect();
-  const n = state.forecast.hours.length;
-  return Math.floor(((e.clientX - r.left) / r.width) * n);
+  const bars = el.track.children;
+  for (let i = 0; i < bars.length; i++) {
+    const r = bars[i].getBoundingClientRect();
+    if (e.clientX < r.right + 1.5) return i; // half the gap belongs to each side
+  }
+  return bars.length - 1;
 }
 
 /* ======================================================================
@@ -444,10 +452,16 @@ function bindUI() {
       magnify(null);
     }, delay);
   };
+  let settleTimer = 0;
   const scrub = e => {
     const i = indexFromPointer(e);
     if (i !== state.selected && e.pointerType === 'touch') navigator.vibrate?.(4);
     select(i);
+    // bars keep sliding for a moment after magnifying: check again once
+    // they settle so the selected hour is the one under the finger
+    const { clientX, pointerType } = e;
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => dragging && scrub({ clientX, pointerType }), 200);
   };
 
   el.track.addEventListener('pointerdown', e => {
