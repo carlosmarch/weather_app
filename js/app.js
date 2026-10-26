@@ -253,6 +253,8 @@ function paintSky(timeColor, tempColor) {
   const next = el.skyLayers[state.skyIndex ^ 1];
   const prev = el.skyLayers[state.skyIndex];
   gradient(next, '-65deg', timeColor, tempColor);
+  // page background = colour along the bottom edge of the sky
+  el.root.style.backgroundColor = mix(timeColor, tempColor, 0.3);
   next.classList.add('is-active');
   prev.classList.remove('is-active');
   state.skyIndex ^= 1;
@@ -720,6 +722,8 @@ function fitScreen() {
   measure();
   window.addEventListener('resize', measure);
   window.addEventListener('orientationchange', () => setTimeout(measure, 300));
+  // the screen-tall page must never scroll by the hidden strip
+  if (standalone) window.addEventListener('scroll', () => { if (window.scrollY) window.scrollTo(0, 0); }, { passive: true });
 
   // hidden check screen: tap the date 5 times
   let taps = 0, tapTimer = 0;
@@ -733,7 +737,7 @@ function fitScreen() {
 
 function toggleDiagnostics() {
   const old = document.getElementById('diag');
-  if (old) return old.remove();
+  if (old) { old.cleanup?.(); return old.remove(); }
   const probe = v => {
     const d = document.createElement('div');
     d.style.cssText = `position:absolute;visibility:hidden;height:${v}`;
@@ -759,17 +763,24 @@ function toggleDiagnostics() {
   d.id = 'diag';
   d.style.cssText = 'position:fixed;z-index:99;left:12px;top:90px;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.75);color:#fff;font:11px/1.6 ui-monospace,monospace;white-space:pre;user-select:text;-webkit-user-select:text';
   d.textContent = Object.entries(rows).map(([k, v]) => `${k}: ${v}`).join('\n') +
-    '\n\nbottom markers:\nred = fixed bottom:0\ngreen = app bottom\nblue = 100vh';
+    '\n\nbottom markers:\nred = fixed bottom:0\ngreen = inside app\nblue = fixed 100vh\nyellow = page bottom\npage background = magenta';
   // markers at the bottom by three methods
   const mark = (css, color) => {
     const m = document.createElement('div');
     m.style.cssText = `position:fixed;z-index:98;height:6px;background:${color};${css}`;
     d.append(m);
   };
-  mark('left:0;width:33%;bottom:0', '#f33');
-  mark(`left:33%;width:34%;top:calc(${cs.getPropertyValue('--app-h') || '100%'} - 6px)`, '#3f3');
-  mark('left:67%;width:33%;top:calc(100vh - 6px)', '#39f');
-  document.body.append(d);
+  mark('left:0;width:25%;bottom:0', '#f33');
+  mark('left:50%;width:25%;top:calc(100vh - 6px)', '#39f');
+  const inApp = document.createElement('div');
+  inApp.style.cssText = 'position:absolute;z-index:98;left:25%;width:25%;bottom:0;height:6px;background:#3f3';
+  const inPage = document.createElement('div');
+  inPage.style.cssText = `position:absolute;z-index:98;left:75%;width:25%;top:calc(${cs.getPropertyValue('--app-h') || '100%'} - 6px);height:6px;background:#fd0`;
+  el.app.append(inApp);
+  document.body.append(d, inPage);
+  const bg = el.root.style.backgroundColor;
+  el.root.style.backgroundColor = '#f0f';
+  d.cleanup = () => { inApp.remove(); inPage.remove(); el.root.style.backgroundColor = bg; };
 }
 
 function registerServiceWorker() {

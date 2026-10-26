@@ -28,9 +28,15 @@ html, body {
   height: 100%;
 }
 
+/* JS tints this to the bottom of the sky, so any area iOS leaves without
+   content blends in instead of showing a grey band */
+html {
+  background: #1b1b1b;
+  transition: background-color 2s ease;
+}
+
 body {
   overflow: hidden;
-  background: #1b1b1b;
   color: var(--ink);
   font-family: 'Montserrat', system-ui, sans-serif;
   text-rendering: optimizeLegibility;
@@ -56,9 +62,13 @@ body {
   overflow: hidden;
 }
 
-/* don't clip the page to the short viewport in the installed iOS app */
-.is-standalone,
-.is-standalone body { overflow: visible; }
+/* Installed iOS app: iOS doesn't paint fixed elements below the short
+   viewport it reports, so make the page itself screen-tall and place the
+   app in it instead of pinning it to the viewport */
+.is-standalone { height: var(--app-h, 100%); }
+.is-standalone body { overflow: visible; touch-action: none; }
+.is-standalone .app { position: absolute; }
+.is-standalone .search__results { touch-action: pan-y; }
 
 button {
   font: inherit;
