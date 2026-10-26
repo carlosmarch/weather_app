@@ -5,7 +5,7 @@
  * thin translucent cloud bands, wide fog bands and thunder flashes.
  */
 
-import { hexToRgb } from './palette.js';
+import { hexToRgb, mix } from './palette.js';
 
 const REF_AREA = 1440 * 900;
 
@@ -37,7 +37,8 @@ export function createScene(canvas, getAnchor) {
   function build(fade = true) {
     const fx = state.fx;
     const anchor = getAnchor();
-    const timeRgb = hexToRgb(state.timeColor).join(',');
+    // tinted stars: lifted toward white, or they vanish into a black sky
+    const timeRgb = hexToRgb(mix(state.timeColor, '#ffffff', 0.65)).join(',');
 
     layers = {
       stars: Array.from({ length: scale(state.stars) }, (_, i) => ({
@@ -70,7 +71,7 @@ export function createScene(canvas, getAnchor) {
       })),
       wind: Array.from({ length: scale(fx.wind) }, () => ({
         x: rand(-W, W), y: rand(0, H),
-        len: rand(60, 220), v: rand(500, 1100), a: rand(0.04, 0.14),
+        len: rand(40, 130), v: rand(500, 1100), a: rand(0.06, 0.18),
       })),
       // [cycle s, delay s] from the original thunder keyframes
       thunder: [[3, 0], [10.5, 8.5], [6.2, 20.2], [7.4, 4.1]].slice(0, fx.thunder || 0),
@@ -120,7 +121,12 @@ export function createScene(canvas, getAnchor) {
         w.x += w.v * dt;
         if (w.x > W) { w.x = -w.len - rand(0, W / 2); w.y = rand(0, H); }
       }
-      ctx.fillStyle = `rgba(255,255,255,${w.a * fade})`;
+      // tapered streak: transparent at both ends
+      const g = ctx.createLinearGradient(w.x, 0, w.x + w.len, 0);
+      g.addColorStop(0, 'rgba(255,255,255,0)');
+      g.addColorStop(0.6, `rgba(255,255,255,${w.a * fade})`);
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
       ctx.fillRect(w.x, w.y, w.len, 1);
     }
 

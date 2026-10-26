@@ -8,7 +8,7 @@
 
 import { getForecast, reverseGeocode, searchCity, getPosition } from './weather.js';
 import { getCondition, CODES } from './conditions.js';
-import { colorByCelsius, colorByHour, sunIntensity, starsByHour, luminance, mix } from './palette.js';
+import { colorByCelsius, colorByHour, desaturate, sunIntensity, starsByHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { cities } from './cities.js';
 
@@ -101,7 +101,7 @@ function loadRandomCity() {
   do {
     c = cities[Math.floor(Math.random() * cities.length)];
   } while (state.place && c[0] === state.place.label.split(',')[0]);
-  return loadPlace({ lat: c[2], lon: c[3], label: `${c[0]}, ${c[1]}` });
+  return loadPlace({ lat: c[2], lon: c[3], label: cityLabel(c) });
 }
 
 async function loadPlace(place, { share = true, remember = false } = {}) {
@@ -165,9 +165,14 @@ function render() {
   const hour = local.getUTCHours() + local.getUTCMinutes() / 60;
 
   const cond = getCondition(h.code, h.wind);
-  const timeColor = colorByHour(hour);
-  const tempColor = colorByCelsius(h.temp);
   const isDay = h.isDay;
+  const hourColor = colorByHour(hour);
+  let tempColor = colorByCelsius(h.temp);
+  // At night the temperature colour sinks into the dark, so a mild
+  // night still reads as night instead of dusk
+  if (!isDay) tempColor = mix(tempColor, hourColor, 0.55);
+  const timeColor = desaturate(hourColor, cond.fx.sat);
+  tempColor = desaturate(tempColor, cond.fx.sat);
 
   // Only rebuild the scene when what it shows actually changes
   const key = [h.code, Math.round(h.temp), isDay, Math.floor(hour), Math.round(h.wind / 10)].join('|');
@@ -195,7 +200,7 @@ function render() {
   el.themeColor.content = timeColor;
 
   // Sun or moon
-  makeDayOrNight(isDay, h.temp);
+  makeDayOrNight(isDay, h.temp, cond.fx.veil);
 
   // Environment particles
   const stars = isDay ? 0 : starsByHour(hour) || 40;
@@ -211,17 +216,20 @@ function paintSky(timeColor, tempColor) {
   const next = el.skyLayers[state.skyIndex ^ 1];
   const prev = el.skyLayers[state.skyIndex];
   next.style.background = `linear-gradient(-65deg, ${timeColor}, ${tempColor})`;
+  // perceptual blend where supported; ignored by older browsers
+  next.style.background = `linear-gradient(-65deg in oklch, ${timeColor}, ${tempColor})`;
   next.classList.add('is-active');
   prev.classList.remove('is-active');
   state.skyIndex ^= 1;
 }
 
-function makeDayOrNight(isDay, celsius) {
+function makeDayOrNight(isDay, celsius, veiled) {
   el.icon.textContent = '';
   const body = document.createElement('div');
   if (isDay) {
-    const { pulses, big, shining } = sunIntensity(celsius);
-    body.className = 'sun' + (shining ? ' shining' : '');
+    // a sun behind clouds or fog doesn't shine or pulse
+    const { pulses, big, shining } = veiled ? {} : sunIntensity(celsius);
+    body.className = 'sun' + (shining ? ' shining' : '') + (veiled ? ' is-veiled' : '');
     for (let i = 0; i < pulses; i++) {
       const p = document.createElement('div');
       p.className = big ? 'sun-pulse2x' : 'sun-pulse';
@@ -432,7 +440,7 @@ function startDemo(params) {
     temp: num('temp', Math.round(Math.random() * 45 - 8)),
     hour: num('hour', Math.random() * 24),
     wind: num('wind', Math.random() * 40),
-    label: params.get('name') || `${c[0]}, ${c[1]}`,
+    label: params.get('name') || cityLabel(c),
   });
 }
 
@@ -504,6 +512,10 @@ function loadUnit() {
 
 function formatCoords({ lat, lon }) {
   return `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`;
+}
+
+function cityLabel([city, country, , , code]) {
+  return `${city}, ${code || country}`;
 }
 
 function pad(n) {

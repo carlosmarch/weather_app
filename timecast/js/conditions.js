@@ -44,5 +44,13 @@ export function getCondition(code, windKmh = 0) {
   // Strong wind adds streaks and slants the rain (old createWind @todo)
   if (windKmh >= 25) fx.wind = Math.max(fx.wind || 0, Math.round((windKmh - 15) / 2));
   fx.slant = Math.min(windKmh / 60, 0.6);
+
+  // Clouds, fog and precipitation drain colour from the sky...
+  const wet = fx.rain || fx.snow ? 0.1 : 0;
+  const sat = 1 - (fx.clouds || 0) * 0.025 - (fx.darken || 0) * 1.2 - (fx.fog || 0) * 0.05 - wet;
+  fx.sat = Math.min(Math.max(sat, 0.4), 1);
+  // ...and hide the sun behind a veil
+  fx.veil = (fx.clouds || 0) >= 10 || !!fx.fog;
+
   return { label: base.label, fx };
 }
