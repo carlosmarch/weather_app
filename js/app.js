@@ -337,7 +337,6 @@ function buildTimeline() {
     bar.style.height = `${18 + ((h.temp - min) / range) * 82}%`;
     // each bar is that hour's sky: time colour at the bottom, temperature on top
     gradient(bar, 'to top', timeColor, tempColor);
-    if (!h.isDay) bar.classList.add('is-night');
 
     // precipitation marks: rain ticks / snow dots, more for heavier
     const amount = Math.max(cond.fx.rain || 0, cond.fx.snow || 0);
@@ -356,6 +355,15 @@ function buildTimeline() {
     }
     el.track.append(bar);
   });
+  // night hours: one straight line under the bars (drawn on the track so
+  // it doesn't bend when the bars magnify)
+  const n = hours.length;
+  const stops = hours.map((h, i) => {
+    const c = h.isDay ? 'transparent' : 'var(--ink-faint)';
+    return `${c} ${(i / n * 100).toFixed(2)}% ${((i + 1) / n * 100).toFixed(2)}%`;
+  });
+  el.track.style.setProperty('--night', `linear-gradient(90deg, ${stops.join(', ')})`);
+
   el.timeline.hidden = false;
   markSelected();
 }
@@ -382,6 +390,21 @@ function markSelected() {
   el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${Math.round(h.temp)} degrees, ${getCondition(h.code).label}`);
 }
 
+/* Dock-style magnification: bars swell with their distance to the pointer */
+function magnify(e) {
+  const bars = el.track.children;
+  if (!e) {
+    for (const b of bars) b.style.removeProperty('--mag');
+    return;
+  }
+  const r = el.track.getBoundingClientRect();
+  const pos = ((e.clientX - r.left) / r.width) * bars.length - 0.5;
+  for (let i = 0; i < bars.length; i++) {
+    const d = i - pos;
+    bars[i].style.setProperty('--mag', (1 + 0.55 * Math.exp(-(d * d) / 4.5)).toFixed(3));
+  }
+}
+
 function indexFromPointer(e) {
   const r = el.track.getBoundingClientRect();
   const n = state.forecast.hours.length;
@@ -406,16 +429,51 @@ function bindUI() {
     if (state.forecast) { render(); renderRange(); }
   });
 
-  // Timeline: tap or drag to scrub
+  // Timeline: tap or drag to scrub. While a finger is down (or a mouse
+  // hovers) the timeline grows and the bars under the pointer swell
   let dragging = false;
+  let shrinkTimer = 0;
+  const grow = () => {
+    clearTimeout(shrinkTimer);
+    el.timeline.classList.add('is-active');
+  };
+  const shrink = (delay = 0) => {
+    clearTimeout(shrinkTimer);
+    shrinkTimer = setTimeout(() => {
+      el.timeline.classList.remove('is-active');
+      magnify(null);
+    }, delay);
+  };
+  const scrub = e => {
+    const i = indexFromPointer(e);
+    if (i !== state.selected && e.pointerType === 'touch') navigator.vibrate?.(4);
+    select(i);
+  };
+
   el.track.addEventListener('pointerdown', e => {
     if (!state.forecast) return;
     dragging = true;
     el.track.setPointerCapture(e.pointerId);
-    select(indexFromPointer(e));
+    grow();
+    magnify(e);
+    scrub(e);
   });
-  el.track.addEventListener('pointermove', e => dragging && select(indexFromPointer(e)));
-  const stop = () => { dragging = false; };
+  el.track.addEventListener('pointermove', e => {
+    if (!state.forecast) return;
+    if (dragging) scrub(e);
+    if (dragging || e.pointerType === 'mouse') magnify(e);
+  });
+  el.track.addEventListener('pointerenter', e => {
+    if (state.forecast && e.pointerType === 'mouse') { grow(); magnify(e); }
+  });
+  el.track.addEventListener('pointerleave', e => {
+    if (!dragging && e.pointerType === 'mouse') shrink();
+  });
+  const stop = e => {
+    dragging = false;
+    // touch: stay big for a moment so the result can be read
+    if (e.pointerType !== 'mouse') shrink(700);
+  };
   el.track.addEventListener('pointerup', stop);
   el.track.addEventListener('pointercancel', stop);
 

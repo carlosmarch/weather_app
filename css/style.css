@@ -347,10 +347,11 @@ button {
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  height: 70px;
+  height: var(--track-h, 70px);
   max-width: 560px;
   margin: 0 auto;
   padding: 14px 0 12px;
+  transition: height 0.35s var(--ease);
   touch-action: none;
   cursor: ew-resize;
   position: relative;
@@ -365,24 +366,32 @@ button {
   min-height: 4px;
   border-radius: 2px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
-  transition: transform 0.25s var(--ease), box-shadow 0.25s ease;
+  transform: scaleY(calc(var(--mag, 1) * var(--sel, 1)));
+  transition: transform 0.18s var(--ease), box-shadow 0.25s ease;
   transform-origin: bottom;
 }
 
 .bar.is-selected {
+  --sel: 1.1;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 0 1.5px var(--ink);
-  transform: scaleY(1.1);
 }
 
-/* night hours: a thin line under the bars, joined across the gaps */
-.bar.is-night::before {
+/* Growing while scrubbing (touch) or hovering (mouse) */
+.timeline.is-active { --track-h: 116px; }
+.timeline.is-active .timeline__label { transform: scale(1.25); }
+.timeline__label { transition: transform 0.35s var(--ease); }
+
+
+/* night hours: a thin line under the bars (gradient built in JS) */
+.timeline__track::after {
   content: '';
   position: absolute;
-  left: -1.5px;
-  right: -1.5px;
-  bottom: -7px;
+  left: 0;
+  right: 0;
+  bottom: 5px;
   height: 2px;
-  background: var(--ink-faint);
+  background: var(--night, none);
+  pointer-events: none;
 }
 
 /* precipitation: rain ticks, snow dots */
@@ -390,7 +399,9 @@ button {
   position: absolute;
   left: 50%;
   bottom: calc(100% + 4px);
-  transform: translateX(-50%);
+  /* undo the bar's scale so the marks don't stretch */
+  transform: translateX(-50%) scaleY(calc(1 / (var(--mag, 1) * var(--sel, 1))));
+  transform-origin: bottom;
   display: flex;
   align-items: flex-end;
   gap: 2px;
@@ -564,14 +575,20 @@ button {
   .text-top { margin-bottom: 18px; }
   .temperature { margin-top: 14px; font-size: 36px; }
   .text-bottom { min-height: 0; }
-  .timeline__track { height: 54px; padding-bottom: 10px; }
+  .timeline__track { padding-bottom: 10px; }
+  .timeline__track::after { bottom: 3px; }
+  .timeline { --track-h: 54px; }
+  .timeline.is-active { --track-h: 76px; }
   .timeline__head { margin-bottom: 4px; }
   :root { --icon: 72px; }
 }
 
 @media (min-width: 900px) {
   .bar__tick { display: block; }
-  .timeline__track { padding-bottom: 26px; height: 84px; }
+  .timeline__track { padding-bottom: 26px; }
+  .timeline__track::after { bottom: 19px; }
+  .timeline { --track-h: 84px; }
+  .timeline.is-active { --track-h: 130px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
