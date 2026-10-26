@@ -19,6 +19,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const $ = sel => document.querySelector(sel);
 const el = {
   root: document.documentElement,
+  app: $('#app'),
   skyLayers: document.querySelectorAll('.sky__layer'),
   darken: $('.sky__darken'),
   condition: $('#condition'),
@@ -66,6 +67,7 @@ init();
 
 function init() {
   bindUI();
+  fitScreen();
   registerServiceWorker();
 
   const params = new URLSearchParams(location.search);
@@ -698,6 +700,76 @@ function pad(n) {
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* Size the app to the real screen. In the installed iOS app (translucent
+   status bar) the reported viewport is short by the status bar's height,
+   so use the screen height there; elsewhere the window height. */
+function fitScreen() {
+  const standalone = navigator.standalone === true;
+  el.root.classList.toggle('is-standalone', standalone);
+  const measure = () => {
+    let h = window.innerHeight;
+    if (standalone) {
+      const portrait = matchMedia('(orientation: portrait)').matches;
+      h = Math.max(h, portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height));
+    }
+    el.root.style.setProperty('--app-h', `${h}px`);
+    scene.resize();
+  };
+  measure();
+  window.addEventListener('resize', measure);
+  window.addEventListener('orientationchange', () => setTimeout(measure, 300));
+
+  // hidden check screen: tap the date 5 times
+  let taps = 0, tapTimer = 0;
+  el.date.addEventListener('click', () => {
+    taps++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { taps = 0; }, 1200);
+    if (taps >= 5) { taps = 0; toggleDiagnostics(); }
+  });
+}
+
+function toggleDiagnostics() {
+  const old = document.getElementById('diag');
+  if (old) return old.remove();
+  const probe = v => {
+    const d = document.createElement('div');
+    d.style.cssText = `position:absolute;visibility:hidden;height:${v}`;
+    document.body.append(d);
+    const px = d.getBoundingClientRect().height;
+    d.remove();
+    return Math.round(px);
+  };
+  const cs = getComputedStyle(el.root);
+  const safe = side => probe(`env(safe-area-inset-${side})`);
+  const rows = {
+    standalone: navigator.standalone,
+    screen: `${screen.width}x${screen.height}`,
+    inner: `${innerWidth}x${innerHeight}`,
+    visualVP: window.visualViewport ? Math.round(visualViewport.height) : '-',
+    docClient: document.documentElement.clientHeight,
+    '100vh': probe('100vh'), '100lvh': probe('100lvh'), '100dvh': probe('100dvh'), '100svh': probe('100svh'),
+    'safe top/bottom': `${safe('top')}/${safe('bottom')}`,
+    'app-h': cs.getPropertyValue('--app-h'),
+    appRect: Math.round(el.app.getBoundingClientRect().bottom),
+  };
+  const d = document.createElement('div');
+  d.id = 'diag';
+  d.style.cssText = 'position:fixed;z-index:99;left:12px;top:90px;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.75);color:#fff;font:11px/1.6 ui-monospace,monospace;white-space:pre;user-select:text;-webkit-user-select:text';
+  d.textContent = Object.entries(rows).map(([k, v]) => `${k}: ${v}`).join('\n') +
+    '\n\nbottom markers:\nred = fixed bottom:0\ngreen = app bottom\nblue = 100vh';
+  // markers at the bottom by three methods
+  const mark = (css, color) => {
+    const m = document.createElement('div');
+    m.style.cssText = `position:fixed;z-index:98;height:6px;background:${color};${css}`;
+    d.append(m);
+  };
+  mark('left:0;width:33%;bottom:0', '#f33');
+  mark(`left:33%;width:34%;top:calc(${cs.getPropertyValue('--app-h') || '100%'} - 6px)`, '#3f3');
+  mark('left:67%;width:33%;top:calc(100vh - 6px)', '#39f');
+  document.body.append(d);
 }
 
 function registerServiceWorker() {

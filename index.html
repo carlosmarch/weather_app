@@ -9,9 +9,7 @@
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <!-- solid bar: "black-translucent" makes iOS home-screen apps leave an
-       unpainted strip at the bottom -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Timecast">
 
   <link rel="manifest" href="manifest.webmanifest">
@@ -27,6 +25,7 @@
   <script type="module" src="js/app.js"></script>
 </head>
 <body>
+<div class="app" id="app">
   <div class="sky" aria-hidden="true">
     <div class="sky__layer"></div>
     <div class="sky__layer"></div>
@@ -88,5 +87,6 @@
 
   <div class="toast" id="toast" role="status" hidden></div>
   <div class="domlog" id="domlog" hidden></div>
+</div>
 </body>
 </html>

@@ -29,8 +29,6 @@ html, body {
 }
 
 body {
-  position: fixed;
-  inset: 0;
   overflow: hidden;
   background: #1b1b1b;
   color: var(--ink);
@@ -44,6 +42,23 @@ body {
   -webkit-user-select: none;
   transition: color 1.2s ease;
 }
+
+/* Everything lives in one fixed box sized to the real screen (JS sets
+   --app-h). iOS home-screen apps with a translucent status bar report a
+   viewport short by the status bar's height; sizing from 100% or bottom: 0
+   left an unpainted strip at the bottom */
+.app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--app-h, 100%);
+  overflow: hidden;
+}
+
+/* don't clip the page to the short viewport in the installed iOS app */
+.is-standalone,
+.is-standalone body { overflow: visible; }
 
 button {
   font: inherit;
@@ -64,7 +79,7 @@ button {
    SKY - two gradient layers that cross-fade
    ====================================================================== */
 .sky {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 0;
   background: linear-gradient(-65deg, #2f2f2f, #1b1b1b);
@@ -83,7 +98,7 @@ button {
 .sky__darken { background: #333; }
 
 .scene {
-  position: fixed;
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -98,7 +113,7 @@ button {
    TOOLBAR
    ====================================================================== */
 .toolbar {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -139,7 +154,7 @@ button {
    CONTENT
    ====================================================================== */
 .content {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 2;
   display: flex;
@@ -325,7 +340,7 @@ button {
    TIMELINE - next 24 hours, drag to scrub
    ====================================================================== */
 .timeline {
-  position: fixed;
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
@@ -482,7 +497,7 @@ button {
    SEARCH
    ====================================================================== */
 .search {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 10;
   display: flex;
@@ -634,7 +649,7 @@ button {
    MISC
    ====================================================================== */
 .toast {
-  position: fixed;
+  position: absolute;
   left: 50%;
   top: max(70px, calc(env(safe-area-inset-top) + 56px));
   z-index: 5;
@@ -657,7 +672,7 @@ button {
 .is-demo .timeline { padding-bottom: max(26px, env(safe-area-inset-bottom)); }
 
 .domlog {
-  position: fixed;
+  position: absolute;
   bottom: 4px;
   width: 100%;
   z-index: 4;
