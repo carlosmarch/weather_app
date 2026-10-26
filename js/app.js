@@ -29,6 +29,9 @@ const el = {
   timeline: $('#timeline'),
   track: $('#timeline-track'),
   label: $('#timeline-label'),
+  low: $('#timeline-low'),
+  high: $('#timeline-high'),
+  retry: $('#retry'),
   search: $('#search'),
   searchForm: $('#search-form'),
   searchInput: $('#search-input'),
@@ -50,6 +53,7 @@ const state = {
   unit: loadUnit(),
   skyIndex: 0,
   lastKey: '',
+  iconKey: '',
   refreshTimer: 0,
   demo: null,
 };
@@ -79,6 +83,7 @@ function init() {
 async function locate({ initial = false } = {}) {
   const btn = $('#btn-locate');
   btn.classList.add('is-busy');
+  if (!state.forecast) setStatus('locating');
   try {
     const pos = await getPosition();
     clearShare();
@@ -88,7 +93,7 @@ async function locate({ initial = false } = {}) {
     if (saved) {
       await loadPlace(saved, { share: false });
     } else {
-      toast(initial ? 'Location unavailable · showing a random city' : 'Location unavailable');
+      toast(initial ? 'No location · random city' : 'Location unavailable');
       if (initial) loadRandomCity();
     }
   } finally {
@@ -109,8 +114,9 @@ async function loadPlace(place, { share = true, remember = false } = {}) {
   document.body.classList.remove('is-demo');
   el.domlog.hidden = true;
   state.place = place;
-  if (place.label) el.city.textContent = place.label;
+  el.city.textContent = place.label || '';
   if (share) shareURL(place);
+  setLoading(true);
 
   try {
     const [forecast, label] = await Promise.all([
@@ -122,6 +128,8 @@ async function loadPlace(place, { share = true, remember = false } = {}) {
     state.forecast = forecast;
     state.selected = 0;
     if (remember) savePlace(place);
+    setLoading(false);
+    state.lastKey = '';
     buildTimeline();
     render();
     scheduleRefresh();
@@ -158,21 +166,8 @@ setInterval(() => {
 function render() {
   const { hours, offset } = state.forecast;
   const h = hours[state.selected];
-
-  // Local time at the location, not on the device
-  const ts = h.isNow ? Date.now() : h.time * 1000;
-  const local = new Date(ts + offset * 1000);
-  const hour = local.getUTCHours() + local.getUTCMinutes() / 60;
-
-  const cond = getCondition(h.code, h.wind);
+  const { local, hour, cond, timeColor, tempColor } = skyFor(h, offset);
   const isDay = h.isDay;
-  const hourColor = colorByHour(hour);
-  let tempColor = colorByCelsius(h.temp);
-  // At night the temperature colour sinks into the dark, so a mild
-  // night still reads as night instead of dusk
-  if (!isDay) tempColor = mix(tempColor, hourColor, 0.55);
-  const timeColor = desaturate(hourColor, cond.fx.sat);
-  tempColor = desaturate(tempColor, cond.fx.sat);
 
   // Only rebuild the scene when what it shows actually changes
   const key = [h.code, Math.round(h.temp), isDay, Math.floor(hour), Math.round(h.wind / 10)].join('|');
@@ -180,11 +175,12 @@ function render() {
   state.lastKey = key;
 
   // Text
+  el.condition.classList.remove('is-status');
   setText(el.condition, cond.label, 'animate-down', changed);
   el.city.textContent = state.place.label;
   el.date.textContent = `${DAYS[local.getUTCDay()]}, ${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]}`;
   renderTemp(h.temp);
-  el.label.textContent = h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`;
+  el.label.textContent = `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°`;
 
   if (!changed) return;
 
@@ -212,23 +208,55 @@ function render() {
   }
 }
 
+/* Colours and condition for one forecast hour. Shared by the sky and
+   the timeline bars, so each bar is a small copy of that hour's sky */
+function skyFor(h, offset) {
+  // Local time at the location, not on the device
+  const ts = h.isNow ? Date.now() : h.time * 1000;
+  const local = new Date(ts + offset * 1000);
+  const hour = local.getUTCHours() + local.getUTCMinutes() / 60;
+
+  const cond = getCondition(h.code, h.wind);
+  const hourColor = colorByHour(hour);
+  let tempColor = colorByCelsius(h.temp);
+  // At night the temperature colour sinks into the dark, so a mild
+  // night still reads as night instead of dusk
+  if (!h.isDay) tempColor = mix(tempColor, hourColor, 0.55);
+  return {
+    local,
+    hour,
+    cond,
+    timeColor: desaturate(hourColor, cond.fx.sat),
+    tempColor: desaturate(tempColor, cond.fx.sat),
+  };
+}
+
+function gradient(el, angle, from, to) {
+  el.style.background = `linear-gradient(${angle}, ${from}, ${to})`;
+  // perceptual blend where supported; ignored by older browsers
+  el.style.background = `linear-gradient(${angle} in oklch, ${from}, ${to})`;
+}
+
 function paintSky(timeColor, tempColor) {
   const next = el.skyLayers[state.skyIndex ^ 1];
   const prev = el.skyLayers[state.skyIndex];
-  next.style.background = `linear-gradient(-65deg, ${timeColor}, ${tempColor})`;
-  // perceptual blend where supported; ignored by older browsers
-  next.style.background = `linear-gradient(-65deg in oklch, ${timeColor}, ${tempColor})`;
+  gradient(next, '-65deg', timeColor, tempColor);
   next.classList.add('is-active');
   prev.classList.remove('is-active');
   state.skyIndex ^= 1;
 }
 
 function makeDayOrNight(isDay, celsius, veiled) {
+  // a sun behind clouds or fog doesn't shine or pulse
+  const { pulses = 0, big, shining } = isDay && !veiled ? sunIntensity(celsius) : {};
+  // keep the element (and its animations) when nothing visible changes
+  const key = isDay ? `sun|${veiled}|${pulses}|${big}|${shining}` : 'moon';
+  if (key === state.iconKey) return;
+  state.iconKey = key;
+
   el.icon.textContent = '';
   const body = document.createElement('div');
   if (isDay) {
-    // a sun behind clouds or fog doesn't shine or pulse
-    const { pulses, big, shining } = veiled ? {} : sunIntensity(celsius);
     body.className = 'sun' + (shining ? ' shining' : '') + (veiled ? ' is-veiled' : '');
     for (let i = 0; i < pulses; i++) {
       const p = document.createElement('div');
@@ -242,10 +270,12 @@ function makeDayOrNight(isDay, celsius, veiled) {
 }
 
 function renderTemp(celsius) {
-  const f = state.unit === 'F';
-  const v = Math.round(f ? celsius * 9 / 5 + 32 : celsius);
   el.temp.hidden = false;
-  el.temp.innerHTML = `${v}<sup>°</sup><small>${state.unit}</small>`;
+  el.temp.innerHTML = `${toUnit(celsius)}<sup>°</sup><small>${state.unit}</small>`;
+}
+
+function toUnit(celsius) {
+  return Math.round(state.unit === 'F' ? celsius * 9 / 5 + 32 : celsius);
 }
 
 function setText(node, text, anim, animate) {
@@ -258,12 +288,32 @@ function setText(node, text, anim, animate) {
   }
 }
 
+function setStatus(text) {
+  el.condition.classList.remove('animate-down');
+  el.condition.classList.add('is-status');
+  el.condition.textContent = text;
+}
+
+function setLoading(on) {
+  document.body.classList.toggle('is-loading', on);
+  if (!on) return;
+  el.retry.hidden = true;
+  setStatus('loading');
+  el.icon.innerHTML = '<div class="loader"></div>';
+  state.iconKey = '';
+}
+
 function showError(msg) {
-  el.icon.innerHTML = '<div class="moon"></div>';
-  el.condition.textContent = msg;
+  document.body.classList.remove('is-loading');
+  el.icon.innerHTML = '<div class="icon-empty"></div>';
+  state.iconKey = '';
+  state.lastKey = '';
+  el.condition.classList.remove('is-status');
+  setText(el.condition, msg, 'animate-down', true);
+  el.date.textContent = '';
   el.timeline.hidden = true;
   el.temp.hidden = true;
-  toast('Could not load the weather · try again later', 6000);
+  el.retry.hidden = false;
 }
 
 /* ======================================================================
@@ -275,15 +325,29 @@ function buildTimeline() {
   const min = Math.min(...temps), max = Math.max(...temps);
   const range = Math.max(max - min, 4);
 
+  state.range = [min, max];
+  renderRange();
+
   el.track.textContent = '';
   el.track.setAttribute('aria-valuemax', hours.length - 1);
   hours.forEach((h, i) => {
+    const { local, cond, timeColor, tempColor } = skyFor(h, offset);
     const bar = document.createElement('div');
     bar.className = 'bar';
     bar.style.height = `${18 + ((h.temp - min) / range) * 82}%`;
+    // each bar is that hour's sky: time colour at the bottom, temperature on top
+    gradient(bar, 'to top', timeColor, tempColor);
     if (!h.isDay) bar.classList.add('is-night');
-    if (getCondition(h.code).fx.rain || getCondition(h.code).fx.snow) bar.classList.add('is-wet');
-    const local = new Date(h.time * 1000 + offset * 1000);
+
+    // precipitation marks: rain ticks / snow dots, more for heavier
+    const amount = Math.max(cond.fx.rain || 0, cond.fx.snow || 0);
+    if (amount) {
+      const wx = document.createElement('span');
+      wx.className = 'bar__wx' + ((cond.fx.snow || 0) > (cond.fx.rain || 0) ? ' is-snow' : '');
+      wx.innerHTML = '<i></i>'.repeat(amount < 50 ? 1 : amount < 110 ? 2 : 3);
+      bar.append(wx);
+    }
+
     if (i > 0 && local.getUTCHours() % 6 === 0) {
       const tick = document.createElement('span');
       tick.className = 'bar__tick';
@@ -294,6 +358,12 @@ function buildTimeline() {
   });
   el.timeline.hidden = false;
   markSelected();
+}
+
+function renderRange() {
+  const [min, max] = state.range;
+  el.low.textContent = `Low ${toUnit(min)}°`;
+  el.high.textContent = `High ${toUnit(max)}°`;
 }
 
 function select(i) {
@@ -325,11 +395,15 @@ function bindUI() {
   $('#btn-locate').addEventListener('click', () => locate());
   $('#btn-random').addEventListener('click', () => (state.demo ? randomDemo() : loadRandomCity()));
   $('#btn-search').addEventListener('click', openSearch);
+  el.retry.addEventListener('click', () => {
+    if (state.place) loadPlace({ ...state.place }, { share: false });
+    else locate({ initial: true });
+  });
 
   el.temp.addEventListener('click', () => {
     state.unit = state.unit === 'C' ? 'F' : 'C';
     try { localStorage.setItem('tc-unit', state.unit); } catch {}
-    if (state.forecast) renderTemp(state.forecast.hours[state.selected].temp);
+    if (state.forecast) { render(); renderRange(); }
   });
 
   // Timeline: tap or drag to scrub
@@ -478,6 +552,7 @@ function buildDemo({ code, temp, hour, wind, label }) {
   state.forecast = { offset, hours };
   state.selected = 0;
   state.lastKey = '';
+  el.retry.hidden = true;
   buildTimeline();
   render();
 }

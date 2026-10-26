@@ -224,6 +224,50 @@ button {
   border-radius: 50%;
 }
 
+/* Loader: a thin ring breathing, with the original pulse inside */
+.loader {
+  box-shadow: inset 0 0 0 1.5px var(--ink-soft);
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+.loader::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  animation: pulseAnim 2.5s ease-out infinite;
+}
+
+/* Error: an empty, dashed circle - nothing to show */
+.icon-empty {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed var(--ink-soft);
+  animation: popIn 1.2s var(--ease) both;
+}
+
+.text-top.is-status {
+  font-weight: 600;
+  color: var(--ink-soft);
+  animation: statusPulse 1.4s ease-in-out infinite alternate;
+}
+
+.retry {
+  margin-top: clamp(24px, 5vh, 36px);
+  padding: 11px 22px;
+  border: 1px solid var(--ink-faint);
+  border-radius: 22px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  transition: background-color 0.2s ease;
+}
+
+.retry:hover { background: var(--ink-faint); }
+
 .sun {
   background: #fff;
   animation: popIn 1.2s var(--ease) both;
@@ -281,62 +325,92 @@ button {
   animation: fadeInUp 1s var(--ease) 0.4s both;
 }
 
-.timeline__label {
-  text-align: center;
+.timeline__head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  max-width: 560px;
+  margin: 0 auto 12px;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ink-soft);
-  margin-bottom: 10px;
   font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
 }
+
+.timeline__label { color: var(--ink); text-align: center; }
+.timeline__range { font-weight: 400; font-size: 9px; letter-spacing: 0.15em; }
+.timeline__range:last-child { text-align: right; }
 
 .timeline__track {
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  height: 64px;
+  height: 70px;
   max-width: 560px;
   margin: 0 auto;
-  padding: 8px 0 14px;
+  padding: 14px 0 12px;
   touch-action: none;
   cursor: ew-resize;
   position: relative;
 }
+
+/* Each bar is a little copy of that hour's sky (background set in JS) */
+.timeline__track:focus-visible { outline-color: var(--ink-faint); outline-offset: 6px; }
 
 .bar {
   position: relative;
   flex: 1;
   min-height: 4px;
   border-radius: 2px;
-  background: var(--ink-faint);
-  transition: background-color 0.25s ease, transform 0.25s var(--ease);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s ease;
   transform-origin: bottom;
 }
 
-.bar.is-night { opacity: 0.6; }
-.bar.is-wet::after {
+.bar.is-selected {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 0 1.5px var(--ink);
+  transform: scaleY(1.1);
+}
+
+/* night hours: a thin line under the bars, joined across the gaps */
+.bar.is-night::before {
   content: '';
+  position: absolute;
+  left: -1.5px;
+  right: -1.5px;
+  bottom: -7px;
+  height: 2px;
+  background: var(--ink-faint);
+}
+
+/* precipitation: rain ticks, snow dots */
+.bar__wx {
   position: absolute;
   left: 50%;
   bottom: calc(100% + 4px);
-  width: 3px;
-  height: 3px;
-  margin-left: -1.5px;
-  border-radius: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.bar__wx i {
+  width: 1px;
+  height: 6px;
   background: var(--ink-soft);
 }
 
-.bar.is-selected {
-  background: var(--ink);
-  opacity: 1;
-  transform: scaleY(1.08);
+.bar__wx.is-snow i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
 }
 
 .bar__tick {
   position: absolute;
-  top: calc(100% + 2px);
+  top: calc(100% + 11px);
   left: 50%;
   transform: translateX(-50%);
   font-size: 8px;
@@ -345,6 +419,12 @@ button {
   white-space: nowrap;
   display: none;
 }
+
+/* Switching place: keep the old sky, quiet the controls */
+.timeline, .temperature, .text-bottom > span:last-child { transition: opacity 0.3s ease; }
+.is-loading .timeline { opacity: 0.3; pointer-events: none; }
+.is-loading .temperature,
+.is-loading .text-bottom > span:last-child { opacity: 0; }
 
 /* ======================================================================
    SEARCH
@@ -484,13 +564,14 @@ button {
   .text-top { margin-bottom: 18px; }
   .temperature { margin-top: 14px; font-size: 36px; }
   .text-bottom { min-height: 0; }
-  .timeline__track { height: 46px; padding-bottom: 10px; }
-  .timeline__label { margin-bottom: 4px; }
+  .timeline__track { height: 54px; padding-bottom: 10px; }
+  .timeline__head { margin-bottom: 4px; }
   :root { --icon: 72px; }
 }
 
 @media (min-width: 900px) {
   .bar__tick { display: block; }
+  .timeline__track { padding-bottom: 26px; height: 84px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -548,3 +629,13 @@ button {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes breathe {
+  0%, 100% { transform: scale(0.94); opacity: 0.6; }
+  50%      { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes statusPulse {
+  from { opacity: 0.45; }
+  to   { opacity: 1; }
+}

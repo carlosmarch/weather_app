@@ -47,11 +47,12 @@
   </header>
 
   <main class="content" aria-live="polite">
-    <h1 class="text-top" id="condition"></h1>
+    <h1 class="text-top is-status" id="condition">Locating</h1>
     <div class="icon-container" id="icon">
-      <div class="sun-pulse2x loader"></div>
+      <div class="loader"></div>
     </div>
     <button class="temperature" id="temp" type="button" aria-label="Switch between Celsius and Fahrenheit" hidden></button>
+    <button class="retry" id="retry" type="button" hidden>Retry</button>
     <p class="text-bottom">
       <span id="city"></span>
       <span id="date"></span>
@@ -59,7 +60,11 @@
   </main>
 
   <footer class="timeline" id="timeline" hidden>
-    <div class="timeline__label" id="timeline-label">Now</div>
+    <div class="timeline__head">
+      <span class="timeline__range" id="timeline-low"></span>
+      <span class="timeline__label" id="timeline-label">Now</span>
+      <span class="timeline__range" id="timeline-high"></span>
+    </div>
     <div class="timeline__track" id="timeline-track" role="slider" tabindex="0"
          aria-label="Forecast hour" aria-valuemin="0" aria-valuemax="24" aria-valuenow="0"></div>
   </footer>
