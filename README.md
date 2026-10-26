@@ -6,6 +6,8 @@ Data visualization weather app.
 
 Take a look at [http://time.carlosmarch.es/](http://time.carlosmarch.es/)!
 
+> **New:** Timecast v3, rebuilt for desktop and mobile, is in [`/timecast`](timecast/).
+
 ## Description
 
 This weather app uses openweather API and geolocation via HTML API. Then it displays a visualization of the weather results.
