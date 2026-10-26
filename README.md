@@ -1,21 +1,62 @@
-<img src="screenshots/Icon128.png" width="128"></img>
-# Data visualization Weather App
-Data visualization weather app.  
-*Version 2.0 - 5 feb, 2016
-<img src="screenshots/mockup.jpg" width="100%"></img>
+<img src="icons/icon.svg" width="96">
 
-Take a look at [http://time.carlosmarch.es/](http://time.carlosmarch.es/)!
+# Timecast v3
 
-> **New:** Timecast v3, rebuilt for desktop and mobile, is in [`/timecast`](timecast/).
+The 2016 data visualization weather app, rebuilt for 2026. It keeps the same idea: one circle (sun or moon), a gradient made from **temperature × time of day**, and the weather drawn as particles (rain, snow, fog, cloud bands, stars, thunder).
 
-## Description
+## What's new
 
-This weather app uses openweather API and geolocation via HTML API. Then it displays a visualization of the weather results.
-Better chrome in mobile :)
+| | 2016 | v3 |
+|---|---|---|
+| Weather data | OpenWeatherMap (http, API key in the code) | [Open-Meteo](https://open-meteo.com) (HTTPS, no key) |
+| City name | from the weather response | BigDataCloud reverse geocoding, plus **city search** |
+| Rendering | hundreds of jQuery `<div>`s | one `<canvas>`, sized for the screen and paused when hidden |
+| Dependencies | jQuery, animate.css | none, plain ES modules |
+| Gradient | hard colour buckets | the same colours, blended smoothly |
+| Time of day | device clock | **the location's local time**, with real day/night |
+| Forecast | – | **24-hour timeline**: drag to watch the sky change hour by hour |
+| Temperature | hidden | shown; tap to switch °C/°F |
+| Wind | `@todo` | wind streaks, and the rain slants with the wind |
+| Mobile | fixed paddings | safe areas, phone landscape, touch scrubbing, installable PWA, works offline |
+| Accessibility | – | keyboard support, reduced motion, dark text on very light skies |
 
+## Run
 
-<img src="screenshots/1.png" width="33%"></img>
-<img src="screenshots/2.png" width="33%"></img>
-<img src="screenshots/3.png" width="33%"></img>
-<img src="screenshots/4.png" width="33%"></img>
-<img src="screenshots/5.png" width="33%"></img>
+Plain static files, no build step. Serve the repo root over HTTP (ES modules don't load from `file://`):
+
+```sh
+python3 -m http.server 8000
+# open http://localhost:8000
+```
+
+Geolocation needs `localhost` or HTTPS.
+
+## URL options
+
+- `?lat=40.4&lon=-3.7&name=Madrid` opens a fixed place (search and random city set this, so links can be shared)
+- `?city=random` opens a random capital city
+- `?demo` uses fake data with no network calls (the old development mode). You can pin values, e.g. `?demo&code=95&temp=24&hour=22&wind=40`. `code` is a [WMO weather code](https://open-meteo.com/en/docs#weather_variable_documentation).
+
+## Shortcuts
+
+`/` or `Ctrl/⌘ K` search · `R` random city · `←` `→` move through the forecast hours
+
+## Files
+
+```
+index.html
+css/style.css
+js/app.js         startup, rendering, timeline, search, demo mode
+js/weather.js     Open-Meteo + geocoding calls
+js/conditions.js  WMO code -> label + effects (successor of icons.js)
+js/palette.js     original colours, blended
+js/scene.js       canvas particles
+js/cities.js      world capitals for random mode
+sw.js             offline cache
+```
+
+## The 2016 version
+
+<img src="screenshots/mockup.jpg" width="100%">
+
+The original jQuery + OpenWeatherMap version (v2.0, 5 feb 2016) is kept on the [`legacy-2016`](../../tree/legacy-2016) branch.
