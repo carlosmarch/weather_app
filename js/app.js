@@ -66,6 +66,7 @@ init();
 
 function init() {
   bindUI();
+  fixStandaloneGap();
   registerServiceWorker();
 
   const params = new URLSearchParams(location.search);
@@ -698,6 +699,24 @@ function pad(n) {
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* iOS home-screen apps with a translucent status bar report a viewport
+   that is short by the status bar's height, leaving an empty strip at the
+   bottom. Measure the strip and let the full-screen layers cover it.
+   Anywhere without the bug the gap measures 0 and nothing changes. */
+function fixStandaloneGap() {
+  if (!navigator.standalone) return; // iOS home-screen mode only
+  const measure = () => {
+    const portrait = matchMedia('(orientation: portrait)').matches;
+    const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    const gap = Math.max(0, Math.round(full - window.innerHeight));
+    el.root.style.setProperty('--ios-gap', `${gap < 80 ? gap : 0}px`);
+    scene.resize();
+  };
+  measure();
+  window.addEventListener('resize', measure);
+  window.addEventListener('orientationchange', () => setTimeout(measure, 300));
 }
 
 function registerServiceWorker() {
