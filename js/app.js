@@ -30,6 +30,7 @@ const el = {
   track: $('#timeline-track'),
   label: $('#timeline-label'),
   low: $('#timeline-low'),
+  night: $('#timeline-night'),
   high: $('#timeline-high'),
   retry: $('#retry'),
   search: $('#search'),
@@ -363,6 +364,21 @@ function buildTimeline() {
     return `${c} ${(i / n * 100).toFixed(2)}% ${((i + 1) / n * 100).toFixed(2)}%`;
   });
   el.track.style.setProperty('--night', `linear-gradient(90deg, ${stops.join(', ')})`);
+
+  // a small moon where each night starts and a sun where it ends,
+  // drawn like the big ones: a ring and a dot
+  el.night.textContent = '';
+  const mark = (kind, i) => {
+    const m = document.createElement('i');
+    m.className = `night-mark night-mark--${kind}`;
+    m.style.left = `${(i / n * 100).toFixed(2)}%`;
+    el.night.append(m);
+  };
+  hours.forEach((h, i) => {
+    const prevDay = i === 0 ? true : hours[i - 1].isDay;
+    if (!h.isDay && prevDay) mark('moon', i);
+    if (h.isDay && i > 0 && !prevDay) mark('sun', i);
+  });
 
   el.timeline.hidden = false;
   markSelected();
