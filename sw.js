@@ -1,8 +1,10 @@
 /* Timecast service worker
- * App shell: cache first, refreshed in the background.
+ * App files: network first, so a new deploy shows up on the next load;
+ * the cached copy is only used offline.
+ * Fonts: cache first, refreshed in the background (they never change).
  * Weather API: network first, last response as offline fallback.
  */
-const VERSION = 'timecast-v3.0.0';
+const VERSION = 'timecast-v3.1.0';
 const SHELL = [
   './',
   'index.html',
@@ -36,7 +38,9 @@ self.addEventListener('fetch', e => {
 
   if (url.hostname === 'api.open-meteo.com') {
     e.respondWith(networkFirst(request));
-  } else if (url.origin === location.origin || url.hostname.endsWith('gstatic.com') || url.hostname === 'fonts.googleapis.com') {
+  } else if (url.origin === location.origin) {
+    e.respondWith(appFile(request));
+  } else if (url.hostname.endsWith('gstatic.com') || url.hostname === 'fonts.googleapis.com') {
     e.respondWith(staleWhileRevalidate(request));
   }
 });
@@ -52,6 +56,19 @@ async function networkFirst(request) {
     return res;
   } catch (err) {
     const cached = await cache.match(key);
+    if (cached) return cached;
+    throw err;
+  }
+}
+
+async function appFile(request) {
+  const cache = await caches.open(VERSION);
+  try {
+    const res = await fetch(request, { cache: 'no-cache' });
+    if (res.ok) cache.put(request, res.clone());
+    return res;
+  } catch (err) {
+    const cached = await cache.match(request, { ignoreSearch: request.mode === 'navigate' });
     if (cached) return cached;
     throw err;
   }
