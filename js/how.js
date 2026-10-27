@@ -96,6 +96,26 @@ function tile({ hour, temp, code = 0, wind = 10, data = {}, title, sub, live = f
   return t;
 }
 
+/* rain ticks / snow dots, like the timeline */
+function markEl(kind, n) {
+  const m = document.createElement('span');
+  m.className = 'mk';
+  m.dataset.kind = kind;
+  m.innerHTML = '<i></i>'.repeat(n);
+  return m;
+}
+
+/* the mark a step gets in the timeline, in the tile's corner */
+function withMark(tileEl, kind, level) {
+  const marks = weatherMarks(kind === 'rain' ? { rain: level, snow: 0 } : { rain: 0, snow: level });
+  const corner = document.createElement('span');
+  corner.className = 'tile__mark';
+  corner.title = `${marks.count} ${kind === 'rain' ? 'tick' : 'dot'}${marks.count > 1 ? 's' : ''} in the timeline`;
+  corner.append(markEl(kind, marks.count));
+  tileEl.append(corner);
+  return tileEl;
+}
+
 /* "0.5–2.5" style ranges from the step limits */
 const fmt = v => (v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : String(v));
 function range(steps, i, floor) {
@@ -135,16 +155,16 @@ $('#demo-skies').append(...skies.map(c => tile(c)));
 
 /* 03 · The weather: every step of each kind, live */
 const RAIN_AT = [0.3, 1.5, 5, 12, 35, 70];
-$('#demo-rain').append(...STEPS.rain.steps.map((st, i) => tile({
+$('#demo-rain').append(...STEPS.rain.steps.map((st, i) => withMark(tile({
   hour: 15, temp: 14, code: 63, data: { rain: RAIN_AT[i], snow: 0, vis: 20000 },
   title: st.name, sub: range(STEPS.rain.steps, i), live: true,
-})));
+}), 'rain', i + 1)));
 
 const SNOW_AT = [0.1, 0.6, 1.8, 3.5, 7];
-$('#demo-snow').append(...STEPS.snow.steps.map((st, i) => tile({
+$('#demo-snow').append(...STEPS.snow.steps.map((st, i) => withMark(tile({
   hour: 11, temp: -2, code: 73, data: { snow: SNOW_AT[i], rain: 0, vis: 20000 },
   title: st.name, sub: range(STEPS.snow.steps, i), live: true,
-})));
+}), 'snow', i + 1)));
 
 const FOG = [
   { code: 2, vis: 2500, sub: `1–${MIST_VISIBILITY / 1000} km` },
@@ -229,3 +249,21 @@ track.addEventListener('pointermove', e => { if (dragging || e.pointerType === '
 track.addEventListener('pointerup', () => { dragging = false; });
 track.addEventListener('pointercancel', () => { dragging = false; });
 selectBar(0);
+
+/* Legend: which steps each mark stands for (from the same rules) */
+for (const kind of ['rain', 'snow']) {
+  const groups = {};
+  STEPS[kind].steps.forEach((st, i) => {
+    const n = weatherMarks(kind === 'rain' ? { rain: i + 1, snow: 0 } : { rain: 0, snow: i + 1 }).count;
+    (groups[n] ||= []).push(st.name.toLowerCase());
+  });
+  for (const [n, names] of Object.entries(groups)) {
+    const chip = document.createElement('span');
+    chip.className = 'mark-chip';
+    const label = document.createElement('span');
+    label.textContent = names.join(', ');
+    chip.append(markEl(kind, +n), label);
+    $(`#marks-${kind}`).append(chip);
+  }
+}
+document.querySelectorAll('.legend .mk[data-n]').forEach(m => { m.innerHTML = '<i></i>'.repeat(+m.dataset.n); });

@@ -437,8 +437,49 @@ h3 span {
 /* legend glyphs drawn with tokens */
 .lg--sky { background: linear-gradient(to top, var(--time-dusk), var(--temp-very-hot)); }
 .lg--height { background: linear-gradient(to right, transparent 30%, var(--ink-soft) 30% 42%, transparent 42% 58%, var(--ink-soft) 58% 70%, transparent 70%) bottom / 100% 60% no-repeat, var(--glass); }
-.lg--rain { background: linear-gradient(to right, transparent 40%, var(--ink-soft) 40% 44%, transparent 44% 56%, var(--ink-soft) 56% 60%, transparent 60%) center / 100% 40% no-repeat, var(--glass); }
-.lg--night { background: linear-gradient(var(--ink-soft), var(--ink-soft)) center / 60% 2px no-repeat, var(--glass); }
+/* moon (ring) - line - sun (dot), as under the timeline */
+.lg--night { position: relative; background: linear-gradient(var(--ink-soft), var(--ink-soft)) center / 34% 2px no-repeat, var(--glass); }
+.lg__moon, .lg__sun { position: absolute; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; }
+.lg__moon { left: 6px; box-shadow: inset 0 0 0 1.2px var(--ink-soft); }
+.lg__sun { right: 6px; background: var(--ink-soft); }
+
+/* rain ticks / snow dots, same drawing as the timeline marks */
+.mk { display: inline-flex; align-items: flex-end; gap: 2px; }
+.mk i { width: 1px; height: 7px; background: currentColor; }
+.mk[data-kind="snow"] { flex-direction: column; align-items: center; }
+.mk[data-kind="snow"] i { width: 3px; height: 3px; border-radius: 50%; }
+
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.mark-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 11px;
+  border-radius: 12px;
+  background: var(--glass-row);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke);
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.mark-chip .mk { min-width: 9px; justify-content: center; color: var(--ink-soft); }
+
+/* the mark each rain / snow step gets, in the tile corner */
+.tile__mark {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 2;
+  color: var(--tile-ink, var(--ink));
+  opacity: 0.85;
+}
 
 kbd {
   display: inline-block;
