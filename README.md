@@ -39,7 +39,6 @@ Geolocation needs `localhost` or HTTPS.
 - `?city=random` opens a random capital city
 - `?wallpaper` shows only the sky and the sun or moon, with no buttons, text or forecast bar. Add it to any of the other options (e.g. `?lat=40.4&lon=-3.7&name=Madrid&wallpaper`) and use it as a macOS desktop background with [Plash](https://sindresorhus.com/plash). Use a fixed place, because wallpaper apps usually can't ask for your location
 - `?wallpaper=info` is the same, but keeps the clean view you get by tapping the sky: the weather, temperature, place and forecast bars stay, the buttons and the low · now · high row are hidden
-- `?loader=hue`, `?loader=sky` or `?loader=icon` tries another loading circle: `hue` turns the palette inside the ring, `sky` cycles through sun, clouds, rain, snow and moon, `icon` shows the app icon with its sun breathing. The default is `ring`
 - `?demo` uses fake data with no network calls (the old development mode). You can pin values, e.g. `?demo&code=95&temp=24&hour=22&wind=40`. `code` is a [WMO weather code](https://open-meteo.com/en/docs#weather_variable_documentation).
 
 ## Shortcuts

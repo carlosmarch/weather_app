@@ -305,143 +305,32 @@ button {
   border-radius: 50%;
 }
 
-/* Loader: a thin ring breathing, with the original pulse inside.
-   It keeps the exact size of the sun, so the sun lands right on it */
+/* Loader: the app icon (icons/icon.svg) at the size of the sun, its sun
+   breathing and its two cloud bands drifting */
 .loader {
-  box-shadow: inset 0 0 0 1.5px var(--ink-soft);
-  animation: breathe 2.4s ease-in-out infinite;
-}
-
-/* ?loader=hue - the palette turning inside the ring, mixing a sky */
-.loader--hue {
-  overflow: hidden;
-  animation: popIn 1.2s var(--ease) both;
-}
-
-.loader--hue i {
-  position: absolute;
-  inset: -20%;
-  background: conic-gradient(var(--time-dawn), var(--time-morning), var(--time-noon), var(--temp-very-hot),
-    var(--time-dusk), var(--temp-cold), var(--temp-ice), var(--temp-frost), var(--time-dawn));
-  background: conic-gradient(in oklch, var(--time-dawn), var(--time-morning), var(--time-noon), var(--temp-very-hot),
-    var(--time-dusk), var(--temp-cold), var(--temp-ice), var(--temp-frost), var(--time-dawn));
-  filter: blur(10px);
-  animation: spin 7s linear infinite, breathe 2.4s ease-in-out infinite;
-}
-
-.loader--hue::after {
-  /* a soft light in the middle, like the sun about to come out */
-  background: radial-gradient(closest-side, var(--sun-glow-inner), var(--sun-glow-end));
-  animation: pulseAnim 2.5s ease-out infinite;
-}
-
-/* ?loader=icon - the app icon (icons/icon.svg): its sun breathing,
-   its two cloud bands drifting */
-.loader--icon {
   border-radius: 22%;
   overflow: hidden;
-  box-shadow: none;
   background: linear-gradient(to bottom left, var(--time-noon), var(--temp-very-hot));
   animation: popIn 1.2s var(--ease) both;
 }
 
-.loader--icon::after { display: none; }
-
-.loader--icon b {
+.loader b {
   position: absolute;
   left: -10%;
   right: -10%;
   background: var(--white);
-  animation: lwBob 3s ease-in-out infinite alternate;
+  animation: loaderBands 3s ease-in-out infinite alternate;
 }
 
-.loader--icon b:nth-child(1) { top: 46.1%; height: 2%;   opacity: 0.18; }
-.loader--icon b:nth-child(2) { top: 52.7%; height: 4.3%; opacity: 0.12; animation-delay: -1.5s; }
+.loader b:nth-child(1) { top: 46.1%; height: 2%;   opacity: 0.18; }
+.loader b:nth-child(2) { top: 52.7%; height: 4.3%; opacity: 0.12; animation-delay: -1.5s; }
 
-.loader--icon i {
+.loader i {
   position: absolute;
   inset: 31.25%;
   border-radius: 50%;
   background: var(--white);
-  animation: iconSun 2.4s ease-in-out infinite;
-}
-
-@keyframes iconSun {
-  0%, 100% { transform: scale(0.85); }
-  50%      { transform: scale(1.1); }
-}
-
-/* ?loader=sky - the weather it may find, one after another */
-.loader--sky {
-  overflow: hidden;
-  animation: popIn 1.2s var(--ease) both;
-}
-
-.loader--sky::after { display: none; }
-
-.lw {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  opacity: 0;
-  animation: lwShow 10s ease-in-out infinite;
-}
-
-.lw--sun    { animation-delay: 0s; }
-.lw--clouds { animation-delay: 2s; }
-.lw--rain   { animation-delay: 4s; }
-.lw--snow   { animation-delay: 6s; }
-.lw--moon   { animation-delay: 8s; }
-
-.lw--sun {
-  inset: 24%;
-  width: auto;
-  height: auto;
-  background: var(--ink);
-}
-
-.lw--moon {
-  inset: 24%;
-  width: auto;
-  height: auto;
-  box-shadow: inset 0 0 0 3px var(--ink);
-  background: var(--moon-fill);
-}
-
-.lw--clouds b {
-  position: absolute;
-  left: 0;
-  right: 0;
-  background: var(--ink);
-  animation: lwBob 2.5s ease-in-out infinite alternate;
-}
-
-.lw--clouds b:nth-child(1) { top: 30%; height: 9%;  opacity: 0.18; }
-.lw--clouds b:nth-child(2) { top: 46%; height: 14%; opacity: 0.3;  animation-delay: -0.8s; }
-.lw--clouds b:nth-child(3) { top: 66%; height: 6%;  opacity: 0.15; animation-delay: -1.6s; }
-
-.lw--rain line {
-  stroke: var(--ink);
-  stroke-width: 1.2;
-  opacity: 0.8;
-  animation: lwFall 1s linear infinite;
-}
-
-.lw--snow circle {
-  fill: var(--ink);
-  opacity: 0.9;
-  animation: lwFall 3s linear infinite;
-}
-
-.loader::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--ink);
-  animation: pulseAnim 2.5s ease-out infinite;
+  animation: loaderSun 2.4s ease-in-out infinite;
 }
 
 /* Error: an empty, dashed circle - nothing to show */
@@ -1178,23 +1067,12 @@ a.menu__item { color: inherit; text-decoration: none; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes breathe {
-  0%, 100% { opacity: 0.6; }
-  50%      { opacity: 1; }
+@keyframes loaderSun {
+  0%, 100% { transform: scale(0.85); }
+  50%      { transform: scale(1.1); }
 }
 
-/* each weather of the sky loader shows for 2s of a 10s cycle */
-@keyframes lwShow {
-  0%, 22%, 100% { opacity: 0; }
-  4%, 18%       { opacity: 1; }
-}
-
-@keyframes lwFall {
-  from { transform: translateY(0); }
-  to   { transform: translateY(114px); }
-}
-
-@keyframes lwBob {
+@keyframes loaderBands {
   from { transform: translateX(-6%); }
   to   { transform: translateX(6%); }
 }
