@@ -551,6 +551,16 @@ function bindUI() {
     e.preventDefault();
   });
 
+  // Tap the screen (not a control) to hide / show the top buttons and the
+  // low · now · high row; a tap that closes the menu or search doesn't count
+  let overlayOpen = false;
+  el.app.addEventListener('pointerdown', () => { overlayOpen = !el.menu.hidden || !el.search.hidden; }, true);
+  el.app.addEventListener('click', e => {
+    if (overlayOpen || !el.menu.hidden || !el.search.hidden) return;
+    if (e.target.closest('button, a, input, .timeline, .menu, .search, .toast, .retry')) return;
+    toggleClean();
+  });
+
   // Global shortcuts
   document.addEventListener('keydown', e => {
     if (!el.search.hidden) {
@@ -561,6 +571,7 @@ function bindUI() {
     if (e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) { e.preventDefault(); openSearch(); }
     else if (e.key === 'r') $('#btn-random').click();
     else if (e.key === '?') location.href = 'how.html';
+    else if (e.key === 'h') toggleClean();
     else if (e.key === 'ArrowRight' && state.forecast) select(state.selected + 1);
     else if (e.key === 'ArrowLeft' && state.forecast) select(state.selected - 1);
   });
@@ -713,6 +724,12 @@ function bindMenu() {
     toast(isPinned(place) ? `Pinned ${place.name}` : `Unpinned ${place.name}`);
   });
   el.menu.querySelectorAll('[data-unit]').forEach(b => b.addEventListener('click', () => setUnit(b.dataset.unit)));
+}
+
+/* Clean view: only the sky, the circle, the words and the bars */
+function toggleClean(on = !document.body.classList.contains('is-clean')) {
+  document.body.classList.toggle('is-clean', on);
+  if (on) closeMenu();
 }
 
 function openMenu() {
