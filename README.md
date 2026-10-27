@@ -35,7 +35,7 @@ Geolocation needs `localhost` or HTTPS.
 
 ## URL options
 
-- `?lat=40.4&lon=-3.7&name=Madrid` opens a fixed place (search and random city set this, so links can be shared)
+- `?lat=40.4&lon=-3.7&name=Madrid` opens a fixed place (search and the dice set this, so links can be shared)
 - `?city=random` opens a random capital city
 - `?wallpaper` shows only the sky and the sun or moon, with no buttons, text or forecast bar. Add it to any of the other options (e.g. `?lat=40.4&lon=-3.7&name=Madrid&wallpaper`) and use it as a macOS desktop background with [Plash](https://sindresorhus.com/plash). Use a fixed place, because wallpaper apps usually can't ask for your location
 - `?wallpaper=info` is the same, but keeps the clean view you get by tapping the sky: the weather, temperature, place and forecast bars stay, the buttons and the low · now · high row are hidden
@@ -43,7 +43,7 @@ Geolocation needs `localhost` or HTTPS.
 
 ## Shortcuts
 
-`/` or `Ctrl/⌘ K` search · `R` random city · `←` `→` move through the forecast hours
+`/` or `Ctrl/⌘ K` search · `R` random extreme weather · `←` `→` move through the forecast hours
 
 ## Files
 
@@ -56,6 +56,7 @@ js/conditions.js  WMO code -> label + effects (successor of icons.js)
 js/palette.js     original colours, blended
 js/scene.js       canvas particles
 js/cities.js      world capitals for random mode
+js/explore.js     Explore in search: extreme places, ranked by live weather
 sw.js             offline cache
 ```
 
