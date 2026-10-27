@@ -565,6 +565,7 @@ a.tool { color: inherit; text-decoration: none; }
    OPTIONS MENU (cog)
    ====================================================================== */
 .menu {
+  font-family: 'Inter', system-ui, sans-serif;
   position: absolute;
   top: calc(max(14px, env(safe-area-inset-top)) + 50px);
   right: var(--gutter);
@@ -658,6 +659,7 @@ a.tool { color: inherit; text-decoration: none; }
    SEARCH
    ====================================================================== */
 .search {
+  font-family: 'Inter', system-ui, sans-serif;
   position: absolute;
   inset: 0;
   z-index: 10;
