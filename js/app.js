@@ -478,7 +478,7 @@ function indexFromPointer(e) {
    ====================================================================== */
 function bindUI() {
   $('#btn-locate').addEventListener('click', () => locate());
-  $('#btn-random').addEventListener('click', () => (state.demo ? randomDemo() : loadRandomCity()));
+  $('#btn-random').addEventListener('click', () => (state.demo ? randomDemo() : loadRandomExtreme()));
   $('#btn-search').addEventListener('click', openSearch);
   bindMenu();
   el.retry.addEventListener('click', () => {
@@ -632,7 +632,8 @@ function bindUI() {
 const explore = { theme: THEMES[0].id, now: null, time: 0, pending: null, failed: false };
 
 function loadExplore() {
-  if (explore.pending || (explore.now && Date.now() - explore.time < REFRESH_MS)) return;
+  if (explore.pending) return explore.pending;
+  if (explore.now && Date.now() - explore.time < REFRESH_MS) return Promise.resolve();
   explore.failed = false;
   explore.pending = getNowMany(EXPLORE_PLACES)
     .then(now => { explore.now = now; explore.time = Date.now(); })
@@ -642,6 +643,30 @@ function loadExplore() {
       // still showing the start list: fill it in
       if (!el.search.hidden && el.searchInput.value.trim().length < 2) renderSearch();
     });
+  return explore.pending;
+}
+
+/* Dice: a random Explore theme, then one of its most extreme places.
+   Falls back to a random capital when the live data can't be fetched */
+let lastDiceTheme = '';
+async function loadRandomExtreme() {
+  const btn = $('#btn-random');
+  if (btn.classList.contains('is-busy')) return;
+  btn.classList.add('is-busy');
+  try { await loadExplore(); } finally { btn.classList.remove('is-busy'); }
+  if (!explore.now) return loadRandomCity();
+
+  const here = state.place && placeKey(state.place);
+  const themes = THEMES.filter(t => t.id !== lastDiceTheme).sort(() => Math.random() - 0.5);
+  for (const theme of themes) {
+    const list = rank(theme.id, explore.now, 3).filter(p => placeKey(p) !== here);
+    if (!list.length) continue;
+    const p = list[Math.floor(Math.random() * list.length)];
+    lastDiceTheme = theme.id;
+    toast(`${theme.name} right now · ${p.name}`);
+    return loadPlace({ lat: p.lat, lon: p.lon, label: p.label });
+  }
+  loadRandomCity();
 }
 
 function renderExplore(row) {
