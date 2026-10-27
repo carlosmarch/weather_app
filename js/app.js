@@ -225,7 +225,7 @@ function render() {
   const stars = isDay ? 0 : starsByHour(hour) || 40;
   scene.set({ fx: cond.fx, stars: cond.fx.clouds > 10 ? stars / 4 : stars, timeColor });
 
-  if (state.demo) {
+  if (state.demo === true) {
     el.domlog.hidden = false;
     el.domlog.textContent = `demo · hour ${pad(Math.floor(hour))} · ${Math.round(h.temp)}°C · code ${h.code} · ${cond.label} · wind ${Math.round(h.wind)} km/h`;
   }
@@ -627,6 +627,7 @@ const ICON_LOCATE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12"
 let searchRows = [];
 
 function placeKey(p) {
+  if (p.demo) return `scene:${p.demo}`;
   return `${(+p.lat).toFixed(2)},${(+p.lon).toFixed(2)}`;
 }
 
@@ -642,6 +643,7 @@ function togglePin(place) {
   const pins = loadPins();
   const i = pins.findIndex(p => samePlace(p, place));
   if (i >= 0) pins.splice(i, 1);
+  else if (place.demo) pins.push({ name: place.name, region: place.region, label: place.label, demo: place.demo, from: place.from, to: place.to });
   else pins.push({ name: place.name, region: place.region, label: place.label, lat: place.lat, lon: place.lon });
   try { localStorage.setItem('tc-pins', JSON.stringify(pins)); } catch {}
 }
@@ -654,8 +656,12 @@ function renderSearch(list = null, empty = 'No cities found') {
   const row = place => {
     const i = rows.push(place) - 1;
     const pinned = pins.some(p => samePlace(p, place));
+    // saved pictures show their sky
+    const hex = c => (/^#[0-9a-f]{6}$/i.test(c || '') ? c : null);
+    const sky = place.demo && hex(place.from) && hex(place.to)
+      ? `<i class="place__sky" style="background:linear-gradient(-65deg, ${hex(place.from)}, ${hex(place.to)})"></i>` : '';
     return `<li class="place">
-      <button type="button" class="place__go" data-go="${i}"><span>${esc(place.name)}<small>${esc(place.region || '')}</small></span></button>
+      <button type="button" class="place__go" data-go="${i}">${sky}<span>${esc(place.name)}<small>${esc(place.region || '')}</small></span></button>
       <button type="button" class="place__pin" data-pin="${i}" aria-pressed="${pinned}" aria-label="${pinned ? 'Unpin' : 'Pin'} ${esc(place.name)}" title="${pinned ? 'Unpin' : 'Pin'}">${ICON_PIN}</button>
     </li>`;
   };
@@ -663,7 +669,9 @@ function renderSearch(list = null, empty = 'No cities found') {
   let html = '';
   if (list === null) {
     html += `<li class="place"><button type="button" class="place__go" data-go="locate">${ICON_LOCATE}<span>Use my location</span></button></li>`;
-    if (pins.length) html += heading('Pinned') + pins.map(row).join('');
+    const pinnedPlaces = pins.filter(p => !p.demo), scenes = pins.filter(p => p.demo);
+    if (pinnedPlaces.length) html += heading('Pinned') + pinnedPlaces.map(row).join('');
+    if (scenes.length) html += heading('Saved pictures') + scenes.map(row).join('');
     const suggested = SUGGESTED.filter(p => !pins.some(q => samePlace(p, q)));
     if (suggested.length) html += heading('Suggestions') + suggested.map(row).join('');
   } else {
@@ -677,6 +685,10 @@ function renderSearch(list = null, empty = 'No cities found') {
 
 function pickPlace(place) {
   closeSearch();
+  if (place.demo) {
+    history.replaceState(null, '', `?demo&${place.demo}`);
+    return startDemo(new URLSearchParams(place.demo));
+  }
   loadPlace({ lat: place.lat, lon: place.lon, label: place.label });
 }
 
@@ -691,7 +703,7 @@ function bindMenu() {
   el.menu.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeMenu(); el.menuBtn.focus(); }
   });
-  $('#menu-save').addEventListener('click', () => { closeMenu(); savePicture(); });
+  $('#menu-save').addEventListener('click', () => { closeMenu(); saveScene(); });
   $('#menu-share').addEventListener('click', () => { closeMenu(); share(); });
   $('#menu-pin').addEventListener('click', () => {
     const place = currentPlace();
@@ -769,24 +781,32 @@ async function pictureFile() {
   return new File([blob], `timecast-${city}-${stamp}.png`, { type: 'image/png' });
 }
 
-async function savePicture() {
-  try {
-    const file = (await state.picture) || (await pictureFile());
-    // installed iOS app: no downloads, use the share sheet ("Save Image")
-    if (navigator.standalone && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file] });
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    const a = Object.assign(document.createElement('a'), { href: url, download: file.name });
-    document.body.append(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-    toast('Picture saved');
-  } catch (err) {
-    if (err.name !== 'AbortError') toast('Could not save the picture');
+/* Save picture: keep this scene (place, weather, hour, amounts) as a
+   demo that can be reopened from the pins in search */
+function saveScene() {
+  const h = state.forecast.hours[state.selected];
+  const { local, hour, cond, timeColor, tempColor } = skyFor(h, state.forecast.offset);
+  const params = new URLSearchParams({
+    code: h.code, temp: h.temp.toFixed(1), hour: hour.toFixed(2), wind: Math.round(h.wind || 0),
+    day: h.isDay ? 1 : 0, name: state.place.label, saved: 1,
+  });
+  for (const k of ['rain', 'snow', 'vis', 'gust']) {
+    const v = h.data?.[k];
+    if (typeof v === 'number' && Number.isFinite(v)) params.set(k, +v.toFixed(2));
   }
+  params.sort();
+  const demo = params.toString();
+  const city = state.place.label.split(',')[0].trim();
+  const time = `${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
+  const scene = {
+    name: city,
+    region: `${time} · ${toUnit(h.temp)}° · ${cond.label}`,
+    label: state.place.label,
+    demo, from: timeColor, to: tempColor,
+  };
+  if (isPinned(scene)) return toast('Already saved');
+  togglePin(scene);
+  toast('Picture saved · find it in search');
 }
 
 async function share() {
@@ -840,6 +860,8 @@ function startDemo(params) {
     wind: num('wind', Math.random() * 40),
     // optional measured amounts: &rain= mm/h, &snow= cm/h, &vis= m, &gust= km/h
     data: { rain: num('rain'), snow: num('snow'), vis: num('vis'), gust: num('gust') },
+    day: params.has('day') ? params.get('day') === '1' : undefined,
+    saved: params.get('saved') === '1',
     label: params.get('name') || cityLabel(c),
   });
 }
@@ -848,7 +870,7 @@ function randomDemo() {
   startDemo(new URLSearchParams());
 }
 
-function buildDemo({ code, temp, hour, wind, data = {}, label }) {
+function buildDemo({ code, temp, hour, wind, data = {}, day, saved = false, label }) {
   // Pretend the location's clock reads `hour` right now
   const nowUtc = Date.now();
   const d = new Date(nowUtc);
@@ -860,7 +882,7 @@ function buildDemo({ code, temp, hour, wind, data = {}, label }) {
     return lh >= 7 && lh < 20;
   };
 
-  const hours = [{ time: Math.floor(nowUtc / 1000), temp, code, isDay: isDayAt(nowUtc / 1000), wind, data, isNow: true }];
+  const hours = [{ time: Math.floor(nowUtc / 1000), temp, code, isDay: day ?? isDayAt(nowUtc / 1000), wind, data, isNow: true }];
   for (let i = 0; i < 24; i++) {
     const t = startHour + i * 3600;
     const lh = new Date((t + offset) * 1000).getUTCHours();
@@ -873,8 +895,9 @@ function buildDemo({ code, temp, hour, wind, data = {}, label }) {
       wind,
     });
   }
-  state.demo = true;
-  document.body.classList.add('is-demo');
+  state.demo = saved ? 'saved' : true;
+  document.body.classList.toggle('is-demo', !saved);
+  el.domlog.hidden = true;
   state.place = { lat: 0, lon: 0, label };
   state.forecast = { offset, hours };
   state.selected = 0;

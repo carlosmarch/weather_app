@@ -776,6 +776,15 @@ a.tool { color: inherit; text-decoration: none; }
 
 .place__go:focus-visible { outline: none; }
 
+/* saved picture: a small copy of its sky */
+.place__sky {
+  flex: none;
+  width: 26px;
+  height: 34px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px var(--glass-stroke);
+}
+
 .place__go > span { min-width: 0; }
 
 .place__go svg {
