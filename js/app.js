@@ -91,7 +91,10 @@ function init() {
 async function locate({ initial = false } = {}) {
   const btn = $('#menu-locate');
   btn.classList.add('is-busy');
+  // the menu closes on tap, so say it's working when the sky can't
+  const locating = 'Locating…';
   if (!state.forecast) setStatus('locating');
+  else toast(locating, 15000);
   try {
     const pos = await getPosition();
     clearShare();
@@ -106,6 +109,7 @@ async function locate({ initial = false } = {}) {
     }
   } finally {
     btn.classList.remove('is-busy');
+    if (el.toast.textContent === locating) { clearTimeout(toastTimer); el.toast.hidden = true; }
   }
 }
 
