@@ -196,7 +196,7 @@ strong { color: var(--ink); font-weight: 600; }
   opacity: 0.8;
 }
 
-/* Rows of steps: swipe sideways on phones */
+/* Steps: a grid that wraps, every tile fully visible */
 h3 {
   margin: 26px 0 0;
   font-size: 11px;
@@ -214,20 +214,10 @@ h3 span {
 
 .steps {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: clamp(96px, 28%, 112px);
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 8px;
-  margin: 12px calc(-1 * var(--gutter)) 8px;
-  padding: 0 var(--gutter) 8px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: var(--gutter);
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  margin: 12px 0 8px;
 }
-
-.steps::-webkit-scrollbar { display: none; }
-.steps > .tile { scroll-snap-align: start; }
 
 /* mini sun and moon: same drawing as the app, smaller */
 .orb {
