@@ -65,6 +65,7 @@ const state = {
   refreshTimer: 0,
   demo: null,
   wallpaper: null, // null, '' (sky only) or 'info' (clean view)
+  loader: 'ring',  // loading circle style: 'ring', 'hue' or 'sky' (?loader=)
   retryTimer: 0,
 };
 
@@ -84,6 +85,10 @@ function init() {
   state.wallpaper = params.get('wallpaper');
   document.body.classList.toggle('is-wallpaper', state.wallpaper === '');
   if (state.wallpaper === 'info') toggleClean(true);
+  if (['ring', 'hue', 'sky'].includes(params.get('loader'))) {
+    state.loader = params.get('loader');
+    el.icon.innerHTML = loaderMarkup(state.loader);
+  }
   if (params.has('demo')) return startDemo(params);
 
   const lat = parseFloat(params.get('lat'));
@@ -344,8 +349,31 @@ function setLoading(on) {
   if (!on) return;
   el.retry.hidden = true;
   setStatus('loading');
-  el.icon.innerHTML = '<div class="loader"></div>';
+  el.icon.innerHTML = loaderMarkup(state.loader);
   state.iconKey = '';
+}
+
+/* Loading circles, all exactly the size and place of the sun or moon.
+   ring: a thin ring with the original pulse inside
+   hue:  the palette slowly turning inside the ring, mixing a sky
+   sky:  the ring cycling through the weather it may find: sun, clouds,
+         rain, snow, moon */
+function loaderMarkup(kind) {
+  if (kind === 'hue') return '<div class="loader loader--hue"><i></i></div>';
+  if (kind === 'sky') {
+    const rain = [10, 22, 34, 46, 58, 70, 82, 94, 16, 40, 64, 88]
+      .map((x, i) => `<line x1="${x}" y1="-14" x2="${x - 3}" y2="0" style="animation-delay:-${(i * 0.37 % 1).toFixed(2)}s"/>`).join('');
+    const snow = [15, 30, 45, 60, 75, 88, 22, 52, 82]
+      .map((x, i) => `<circle cx="${x}" cy="-4" r="${i % 3 ? 1.6 : 2.4}" style="animation-delay:-${(i * 0.61 % 3).toFixed(2)}s"/>`).join('');
+    return `<div class="loader loader--sky">
+      <i class="lw lw--sun"></i>
+      <i class="lw lw--clouds"><b></b><b></b><b></b></i>
+      <svg class="lw lw--rain" viewBox="0 0 100 100">${rain}</svg>
+      <svg class="lw lw--snow" viewBox="0 0 100 100">${snow}</svg>
+      <i class="lw lw--moon"></i>
+    </div>`;
+  }
+  return '<div class="loader"></div>';
 }
 
 function showError(msg, err) {

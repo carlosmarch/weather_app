@@ -225,6 +225,8 @@ button {
 }
 
 .text-bottom > span { display: block; margin-bottom: 6px; }
+/* an empty line (no date yet) keeps its height, so nothing shifts */
+.text-bottom > span:empty::before { content: '\00a0'; }
 .text-bottom > span:last-child { color: var(--ink-soft); }
 .text-bottom > .is-detail {
   max-width: 34ch;
@@ -244,6 +246,7 @@ button {
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   padding: 4px 10px;
+  min-height: calc(1em + 8px);
 }
 
 .temperature sup {
@@ -302,10 +305,98 @@ button {
   border-radius: 50%;
 }
 
-/* Loader: a thin ring breathing, with the original pulse inside */
+/* Loader: a thin ring breathing, with the original pulse inside.
+   It keeps the exact size of the sun, so the sun lands right on it */
 .loader {
   box-shadow: inset 0 0 0 1.5px var(--ink-soft);
   animation: breathe 2.4s ease-in-out infinite;
+}
+
+/* ?loader=hue - the palette turning inside the ring, mixing a sky */
+.loader--hue {
+  overflow: hidden;
+  animation: popIn 1.2s var(--ease) both;
+}
+
+.loader--hue i {
+  position: absolute;
+  inset: -20%;
+  background: conic-gradient(var(--time-dawn), var(--time-morning), var(--time-noon), var(--temp-very-hot),
+    var(--time-dusk), var(--temp-cold), var(--temp-ice), var(--temp-frost), var(--time-dawn));
+  background: conic-gradient(in oklch, var(--time-dawn), var(--time-morning), var(--time-noon), var(--temp-very-hot),
+    var(--time-dusk), var(--temp-cold), var(--temp-ice), var(--temp-frost), var(--time-dawn));
+  filter: blur(10px);
+  animation: spin 7s linear infinite, breathe 2.4s ease-in-out infinite;
+}
+
+.loader--hue::after {
+  /* a soft light in the middle, like the sun about to come out */
+  background: radial-gradient(closest-side, var(--sun-glow-inner), var(--sun-glow-end));
+  animation: pulseAnim 2.5s ease-out infinite;
+}
+
+/* ?loader=sky - the weather it may find, one after another */
+.loader--sky {
+  overflow: hidden;
+  animation: popIn 1.2s var(--ease) both;
+}
+
+.loader--sky::after { display: none; }
+
+.lw {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0;
+  animation: lwShow 10s ease-in-out infinite;
+}
+
+.lw--sun    { animation-delay: 0s; }
+.lw--clouds { animation-delay: 2s; }
+.lw--rain   { animation-delay: 4s; }
+.lw--snow   { animation-delay: 6s; }
+.lw--moon   { animation-delay: 8s; }
+
+.lw--sun {
+  inset: 24%;
+  width: auto;
+  height: auto;
+  background: var(--ink);
+}
+
+.lw--moon {
+  inset: 24%;
+  width: auto;
+  height: auto;
+  box-shadow: inset 0 0 0 3px var(--ink);
+  background: var(--moon-fill);
+}
+
+.lw--clouds b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--ink);
+  animation: lwBob 2.5s ease-in-out infinite alternate;
+}
+
+.lw--clouds b:nth-child(1) { top: 30%; height: 9%;  opacity: 0.18; }
+.lw--clouds b:nth-child(2) { top: 46%; height: 14%; opacity: 0.3;  animation-delay: -0.8s; }
+.lw--clouds b:nth-child(3) { top: 66%; height: 6%;  opacity: 0.15; animation-delay: -1.6s; }
+
+.lw--rain line {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  opacity: 0.8;
+  animation: lwFall 1s linear infinite;
+}
+
+.lw--snow circle {
+  fill: var(--ink);
+  opacity: 0.9;
+  animation: lwFall 3s linear infinite;
 }
 
 .loader::after {
@@ -569,6 +660,9 @@ button {
 /* Switching place: keep the old sky, quiet the controls */
 .timeline, .temperature, .text-bottom > span:last-child { transition: opacity 0.3s ease; }
 .is-loading .timeline { opacity: 0.3; pointer-events: none; }
+/* keep the temperature's room while loading, so the circle doesn't
+   jump up when the sun replaces it */
+.is-loading .temperature[hidden] { display: block; visibility: hidden; }
 .is-loading .temperature,
 .is-loading .text-bottom > span:last-child { opacity: 0; }
 
@@ -1049,8 +1143,24 @@ a.menu__item { color: inherit; text-decoration: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(0.94); opacity: 0.6; }
-  50%      { transform: scale(1);    opacity: 1; }
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+/* each weather of the sky loader shows for 2s of a 10s cycle */
+@keyframes lwShow {
+  0%, 22%, 100% { opacity: 0; }
+  4%, 18%       { opacity: 1; }
+}
+
+@keyframes lwFall {
+  from { transform: translateY(0); }
+  to   { transform: translateY(114px); }
+}
+
+@keyframes lwBob {
+  from { transform: translateX(-6%); }
+  to   { transform: translateX(6%); }
 }
 
 @keyframes statusPulse {
