@@ -131,7 +131,8 @@ function range(steps, i, floor) {
 const sunTiles = [...SUN_STEPS].reverse().map(st => {
   const temp = st.min === -Infinity ? 12 : st.min + 2;
   const title = st.min === -Infinity ? 'Under 15°' : `${st.min}° +`;
-  const sub = st.pulses ? `${st.name} · ${st.pulses} pulse${st.pulses > 1 ? 's' : ''}` : st.name;
+  const name = st.name.toLowerCase();
+  const sub = st.pulses ? `${name} · ${st.pulses} pulse${st.pulses > 1 ? 's' : ''}` : name;
   return tile({ hour: 13, temp, title, sub });
 });
 $('#demo-circles').append(

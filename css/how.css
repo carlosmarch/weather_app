@@ -15,7 +15,7 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  font-family: 'Montserrat', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
@@ -78,10 +78,8 @@ a { color: inherit; }
 }
 
 .topbar__title {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* ---- Content ---- */
@@ -95,9 +93,8 @@ h1 {
   margin: 12px 0 14px;
   font-size: clamp(20px, 6vw, 26px);
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: -0.01em;
   line-height: 1.3;
-  text-transform: uppercase;
 }
 
 .lead {
@@ -112,10 +109,8 @@ h2 {
   align-items: baseline;
   gap: 12px;
   margin: 0 0 12px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
+  font-size: 17px;
+  font-weight: 600;
 }
 
 h2 span {
@@ -182,11 +177,9 @@ strong { color: var(--ink); font-weight: 600; }
   z-index: 2;
   padding: 0 6px;
   text-align: center;
-  font-size: 8.5px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  line-height: 1.5;
-  text-transform: uppercase;
+  line-height: 1.4;
   color: var(--tile-ink, var(--ink));
 }
 
@@ -199,16 +192,13 @@ strong { color: var(--ink); font-weight: 600; }
 /* Steps: a grid that wraps, every tile fully visible */
 h3 {
   margin: 26px 0 0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 h3 span {
   margin-left: 8px;
   font-weight: 400;
-  letter-spacing: 0.12em;
   color: var(--ink-soft);
 }
 
@@ -279,10 +269,8 @@ h3 span {
 
 .strip__label,
 .strip__ticks {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--ink-soft);
 }
 
@@ -296,7 +284,6 @@ h3 span {
 .strip__ticks {
   display: flex;
   justify-content: space-between;
-  letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -311,10 +298,8 @@ h3 span {
 
 .timeline__label {
   text-align: center;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   margin-bottom: 8px;
 }
@@ -492,7 +477,7 @@ kbd {
   border-radius: 6px;
   background: var(--glass);
   box-shadow: inset 0 0 0 1px var(--glass-stroke);
-  font: 600 12px 'Montserrat', sans-serif;
+  font: 600 12px 'Inter', sans-serif;
   text-align: center;
   color: var(--ink);
 }
@@ -511,10 +496,8 @@ footer {
   border-radius: 26px;
   background: var(--glass);
   box-shadow: inset 0 0 0 1px var(--glass-stroke-strong);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 600;
   text-decoration: none;
   transition: background-color 0.2s ease;
 }
@@ -523,9 +506,7 @@ footer {
 
 footer p {
   margin-top: 22px;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 12px;
 }
 
 /* ---- Animations (same as the app) ---- */
