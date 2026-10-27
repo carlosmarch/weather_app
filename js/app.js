@@ -89,9 +89,12 @@ function init() {
 }
 
 async function locate({ initial = false } = {}) {
-  const btn = $('#btn-locate');
+  const btn = $('#menu-locate');
   btn.classList.add('is-busy');
+  // the menu closes on tap, so say it's working when the sky can't
+  const locating = 'Locating…';
   if (!state.forecast) setStatus('locating');
+  else toast(locating, 15000);
   try {
     const pos = await getPosition();
     clearShare();
@@ -106,6 +109,7 @@ async function locate({ initial = false } = {}) {
     }
   } finally {
     btn.classList.remove('is-busy');
+    if (el.toast.textContent === locating) { clearTimeout(toastTimer); el.toast.hidden = true; }
   }
 }
 
@@ -476,7 +480,6 @@ function indexFromPointer(e) {
    UI EVENTS
    ====================================================================== */
 function bindUI() {
-  $('#btn-locate').addEventListener('click', () => locate());
   $('#btn-random').addEventListener('click', () => (state.demo ? randomDemo() : loadRandomCity()));
   $('#btn-search').addEventListener('click', openSearch);
   bindMenu();
@@ -703,7 +706,7 @@ function pickPlace(place) {
 }
 
 /* ======================================================================
-   OPTIONS MENU: save picture, share, pin, units
+   OPTIONS MENU: location, save picture, share, pin, how it works, units
    ====================================================================== */
 function bindMenu() {
   el.menuBtn.addEventListener('click', () => (el.menu.hidden ? openMenu() : closeMenu()));
@@ -713,6 +716,7 @@ function bindMenu() {
   el.menu.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeMenu(); el.menuBtn.focus(); }
   });
+  $('#menu-locate').addEventListener('click', () => { closeMenu(); locate(); });
   $('#menu-save').addEventListener('click', () => { closeMenu(); savePicture(); });
   $('#menu-scene').addEventListener('click', () => { closeMenu(); saveScene(); });
   $('#menu-share').addEventListener('click', () => { closeMenu(); share(); });

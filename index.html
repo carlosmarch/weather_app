@@ -39,14 +39,8 @@
       <button class="tool" id="btn-search" type="button" aria-label="Search city" title="Search city">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
       </button>
-      <a class="tool" id="btn-how" href="how.html" aria-label="How it works" title="How it works">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/></svg>
-      </a>
     </div>
     <div class="toolbar__right">
-      <button class="tool" id="btn-locate" type="button" aria-label="Use my location" title="Use my location">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7"/></svg>
-      </button>
       <button class="tool" id="btn-random" type="button" aria-label="Random city" title="Random city">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3.5c4.5 0 6.5 10 11 10H21M3 17h3.5c1.6 0 2.8-1.3 3.8-3M14 10c1-1.7 2.2-3 3.8-3H21M18.5 4.5L21 7l-2.5 2.5M18.5 14.5L21 17l-2.5 2.5"/></svg>
       </button>
@@ -57,6 +51,10 @@
   </header>
 
   <div class="menu" id="menu" role="menu" aria-label="Options" hidden>
+    <button class="menu__item" id="menu-locate" type="button" role="menuitem">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7"/></svg>
+      <span>Use my location</span>
+    </button>
     <button class="menu__item" id="menu-save" type="button" role="menuitem">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11"/><path d="M7.5 10 12 14.5 16.5 10"/><path d="M4.5 19.5h15"/></svg>
       <span>Save as picture</span>
@@ -73,6 +71,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-1 6 3.5 3.5h-11L10 9.5z"/><path d="M12 13v7.5"/></svg>
       <span id="menu-pin-label">Pin this place</span>
     </button>
+    <a class="menu__item" id="menu-how" href="how.html" role="menuitem">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1"/></svg>
+      <span>How it works</span>
+    </a>
     <div class="menu__row" role="group" aria-label="Units">
       <span>Units</span>
       <div class="seg">
