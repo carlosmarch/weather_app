@@ -225,6 +225,8 @@ button {
 }
 
 .text-bottom > span { display: block; margin-bottom: 6px; }
+/* an empty line (no date yet) keeps its height, so nothing shifts */
+.text-bottom > span:empty::before { content: '\00a0'; }
 .text-bottom > span:last-child { color: var(--ink-soft); }
 .text-bottom > .is-detail {
   max-width: 34ch;
@@ -244,6 +246,7 @@ button {
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   padding: 4px 10px;
+  min-height: calc(1em + 8px);
 }
 
 .temperature sup {
@@ -302,19 +305,32 @@ button {
   border-radius: 50%;
 }
 
-/* Loader: a thin ring breathing, with the original pulse inside */
+/* Loader: the app icon (icons/icon.svg) at the size of the sun, its sun
+   breathing and its two cloud bands drifting */
 .loader {
-  box-shadow: inset 0 0 0 1.5px var(--ink-soft);
-  animation: breathe 2.4s ease-in-out infinite;
+  border-radius: 22%;
+  overflow: hidden;
+  background: linear-gradient(to bottom left, var(--time-noon), var(--temp-very-hot));
+  animation: popIn 1.2s var(--ease) both;
 }
 
-.loader::after {
-  content: '';
+.loader b {
   position: absolute;
-  inset: 0;
+  left: -10%;
+  right: -10%;
+  background: var(--white);
+  animation: loaderBands 3s ease-in-out infinite alternate;
+}
+
+.loader b:nth-child(1) { top: 46.1%; height: 2%;   opacity: 0.18; }
+.loader b:nth-child(2) { top: 52.7%; height: 4.3%; opacity: 0.12; animation-delay: -1.5s; }
+
+.loader i {
+  position: absolute;
+  inset: 31.25%;
   border-radius: 50%;
-  background: var(--ink);
-  animation: pulseAnim 2.5s ease-out infinite;
+  background: var(--white);
+  animation: loaderSun 2.4s ease-in-out infinite;
 }
 
 /* Error: an empty, dashed circle - nothing to show */
@@ -569,6 +585,9 @@ button {
 /* Switching place: keep the old sky, quiet the controls */
 .timeline, .temperature, .text-bottom > span:last-child { transition: opacity 0.3s ease; }
 .is-loading .timeline { opacity: 0.3; pointer-events: none; }
+/* keep the temperature's room while loading, so the circle doesn't
+   jump up when the sun replaces it */
+.is-loading .temperature[hidden] { display: block; visibility: hidden; }
 .is-loading .temperature,
 .is-loading .text-bottom > span:last-child { opacity: 0; }
 
@@ -1048,9 +1067,14 @@ a.menu__item { color: inherit; text-decoration: none; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes breathe {
-  0%, 100% { transform: scale(0.94); opacity: 0.6; }
-  50%      { transform: scale(1);    opacity: 1; }
+@keyframes loaderSun {
+  0%, 100% { transform: scale(0.85); }
+  50%      { transform: scale(1.1); }
+}
+
+@keyframes loaderBands {
+  from { transform: translateX(-6%); }
+  to   { transform: translateX(6%); }
 }
 
 @keyframes statusPulse {

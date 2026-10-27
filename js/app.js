@@ -16,6 +16,8 @@ import { cities } from './cities.js';
 import { THEMES, EXPLORE_PLACES, rank } from './explore.js';
 
 const REFRESH_MS = 15 * 60 * 1000;
+// the loader is the app icon, its sun and two cloud bands (see index.html)
+const LOADER = '<div class="loader"><b></b><b></b><i></i></div>';
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -341,9 +343,10 @@ function setLoading(on) {
   if (!on) return;
   el.retry.hidden = true;
   setStatus('loading');
-  el.icon.innerHTML = '<div class="loader"></div>';
+  el.icon.innerHTML = LOADER;
   state.iconKey = '';
 }
+
 
 function showError(msg, err) {
   document.body.classList.remove('is-loading');
