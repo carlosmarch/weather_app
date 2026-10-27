@@ -63,6 +63,8 @@ const state = {
   rollDir: 0,
   refreshTimer: 0,
   demo: null,
+  wallpaper: false,
+  retryTimer: 0,
 };
 
 /* ======================================================================
@@ -76,6 +78,9 @@ function init() {
   registerServiceWorker();
 
   const params = new URLSearchParams(location.search);
+  // ?wallpaper: only the sky and the circle, for desktop wallpaper apps
+  state.wallpaper = params.has('wallpaper');
+  document.body.classList.toggle('is-wallpaper', state.wallpaper);
   if (params.has('demo')) return startDemo(params);
 
   const lat = parseFloat(params.get('lat'));
@@ -353,6 +358,11 @@ function showError(msg, err) {
   el.timeline.hidden = true;
   el.temp.hidden = true;
   el.retry.hidden = false;
+  // a wallpaper has no one to tap Retry, so try again on its own
+  if (state.wallpaper) {
+    clearTimeout(state.retryTimer);
+    state.retryTimer = setTimeout(() => el.retry.click(), 60 * 1000);
+  }
 }
 
 /* ======================================================================
@@ -955,11 +965,12 @@ function buildDemo({ code, temp, hour, wind, data = {}, day, saved = false, labe
    ====================================================================== */
 function shareURL(place) {
   const p = new URLSearchParams({ lat: place.lat.toFixed(3), lon: place.lon.toFixed(3), name: place.label || '' });
+  if (state.wallpaper) p.set('wallpaper', '');
   history.replaceState(null, '', `?${p}`);
 }
 
 function clearShare() {
-  if (location.search) history.replaceState(null, '', location.pathname);
+  if (location.search) history.replaceState(null, '', state.wallpaper ? '?wallpaper' : location.pathname);
 }
 
 function savePlace(place) {
