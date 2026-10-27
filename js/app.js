@@ -6,13 +6,14 @@
  Licensed under the MIT license
  */
 
-import { getForecast, reverseGeocode, searchCity, getPosition } from './weather.js';
+import { getForecast, getNowMany, reverseGeocode, searchCity, getPosition } from './weather.js';
 import { getCondition, weatherMarks, iceHalo, CODES } from './conditions.js';
 import { skyColors, sunIntensity, starsByHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
 import { renderPicture } from './picture.js';
 import { cities } from './cities.js';
+import { THEMES, EXPLORE_PLACES, rank } from './explore.js';
 
 const REFRESH_MS = 15 * 60 * 1000;
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -598,6 +599,13 @@ function bindUI() {
     if (results?.[0]) pickPlace(results[0]);
   });
   el.searchResults.addEventListener('click', e => {
+    const chip = e.target.closest('[data-theme]');
+    if (chip) {
+      explore.theme = chip.dataset.theme;
+      renderSearch();
+      el.searchResults.querySelector(`[data-theme="${explore.theme}"]`)?.focus();
+      return;
+    }
     const go = e.target.closest('[data-go]');
     const pin = e.target.closest('[data-pin]');
     if (pin) {
@@ -620,16 +628,41 @@ function bindUI() {
 /* ======================================================================
    PLACES: suggestions and pins (pins are stored on this device only)
    ====================================================================== */
-const SUGGESTED = [
-  { name: 'New York', region: 'New York, United States', label: 'New York, US', lat: 40.71, lon: -74.01 },
-  { name: 'London', region: 'England, United Kingdom', label: 'London, GB', lat: 51.51, lon: -0.13 },
-  { name: 'Tokyo', region: 'Japan', label: 'Tokyo, JP', lat: 35.68, lon: 139.69 },
-  { name: 'Sydney', region: 'New South Wales, Australia', label: 'Sydney, AU', lat: -33.87, lon: 151.21 },
-  { name: 'Reykjavík', region: 'Iceland', label: 'Reykjavík, IS', lat: 64.15, lon: -21.94 },
-  { name: 'Dubai', region: 'United Arab Emirates', label: 'Dubai, AE', lat: 25.2, lon: 55.27 },
-  { name: 'Mexico City', region: 'Mexico', label: 'Mexico City, MX', lat: 19.43, lon: -99.13 },
-  { name: 'Cape Town', region: 'Western Cape, South Africa', label: 'Cape Town, ZA', lat: -33.92, lon: 18.42 },
-];
+/* Explore: live extremes, fetched once per REFRESH_MS while search is used */
+const explore = { theme: THEMES[0].id, now: null, time: 0, pending: null, failed: false };
+
+function loadExplore() {
+  if (explore.pending || (explore.now && Date.now() - explore.time < REFRESH_MS)) return;
+  explore.failed = false;
+  explore.pending = getNowMany(EXPLORE_PLACES)
+    .then(now => { explore.now = now; explore.time = Date.now(); })
+    .catch(() => { explore.failed = !explore.now; })
+    .finally(() => {
+      explore.pending = null;
+      // still showing the start list: fill it in
+      if (!el.search.hidden && el.searchInput.value.trim().length < 2) renderSearch();
+    });
+}
+
+function renderExplore(row) {
+  const chips = THEMES.map(t =>
+    `<button type="button" class="chip" data-theme="${t.id}" aria-pressed="${t.id === explore.theme}">${esc(t.name)}</button>`).join('');
+  let html = `<li class="search__heading" role="presentation">Explore extremes, live</li>
+    <li class="chips" role="presentation">${chips}</li>`;
+  if (!explore.now) {
+    const msg = explore.failed ? 'Explore unavailable' : 'Looking around the world…';
+    return html + `<li class="search__empty">${msg}</li>`;
+  }
+  const theme = THEMES.find(t => t.id === explore.theme);
+  const list = rank(theme.id, explore.now);
+  if (!list.length) return html + `<li class="search__empty">${esc(theme.empty)}</li>`;
+  return html + list.map(p => {
+    const { timeColor, tempColor } = skyFor(p.now, p.offset);
+    const cond = p.condition.charAt(0).toUpperCase() + p.condition.slice(1);
+    const note = [`${toUnit(p.now.temp)}°${state.unit}`, cond, p.detail].filter(Boolean).join(' · ');
+    return row({ name: p.name, region: p.region, note, label: p.label, lat: p.lat, lon: p.lon, from: timeColor, to: tempColor });
+  }).join('');
+}
 
 const ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-1 6 3.5 3.5h-11L10 9.5z"/><path d="M12 13v7.5"/></svg>';
 const ICON_LOCATE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7"/></svg>';
@@ -658,7 +691,7 @@ function togglePin(place) {
   try { localStorage.setItem('tc-pins', JSON.stringify(pins)); } catch {}
 }
 
-/* list = null: location, pinned and suggested places; otherwise search results */
+/* list = null: location, pinned places and Explore; otherwise search results */
 function renderSearch(list = null, empty = 'No cities found') {
   const pins = loadPins();
   const rows = [];
@@ -668,10 +701,10 @@ function renderSearch(list = null, empty = 'No cities found') {
     const pinned = pins.some(p => samePlace(p, place));
     // saved pictures show their sky
     const hex = c => (/^#[0-9a-f]{6}$/i.test(c || '') ? c : null);
-    const sky = place.demo && hex(place.from) && hex(place.to)
+    const sky = hex(place.from) && hex(place.to)
       ? `<i class="place__sky" style="background:linear-gradient(-65deg, ${hex(place.from)}, ${hex(place.to)})"></i>` : '';
     return `<li class="place">
-      <button type="button" class="place__go" data-go="${i}">${sky}<span>${esc(place.name)}<small>${esc(place.region || '')}</small></span></button>
+      <button type="button" class="place__go" data-go="${i}">${sky}<span>${esc(place.name)}<small>${esc([place.note, place.region].filter(Boolean).join(' · '))}</small></span></button>
       <button type="button" class="place__pin" data-pin="${i}" aria-pressed="${pinned}" aria-label="${pinned ? 'Unpin' : 'Pin'} ${esc(place.name)}" title="${pinned ? 'Unpin' : 'Pin'}">${ICON_PIN}</button>
     </li>`;
   };
@@ -682,8 +715,7 @@ function renderSearch(list = null, empty = 'No cities found') {
     const pinnedPlaces = pins.filter(p => !p.demo), scenes = pins.filter(p => p.demo);
     if (pinnedPlaces.length) html += heading('Pinned') + pinnedPlaces.map(row).join('');
     if (scenes.length) html += heading('Saved scenes') + scenes.map(row).join('');
-    const suggested = SUGGESTED.filter(p => !pins.some(q => samePlace(p, q)));
-    if (suggested.length) html += heading('Suggestions') + suggested.map(row).join('');
+    html += renderExplore(row);
   } else {
     html = list.length ? list.map(row).join('') : `<li class="search__empty">${empty}</li>`;
   }
@@ -868,6 +900,7 @@ async function share() {
 function openSearch() {
   el.search.hidden = false;
   el.searchInput.value = '';
+  loadExplore();
   renderSearch();
   requestAnimationFrame(() => el.searchInput.focus());
 }

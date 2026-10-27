@@ -65,6 +65,41 @@ export async function getForecast(lat, lon) {
   return { offset, hours };
 }
 
+/* Current weather for many places in one request (Explore).
+   Returns one { offset, now } per place, in the same order */
+export async function getNowMany(places, signal) {
+  const params = new URLSearchParams({
+    latitude: places.map(p => p.lat).join(','),
+    longitude: places.map(p => p.lon).join(','),
+    current: 'temperature_2m,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility',
+    timezone: places.map(() => 'auto').join(','),
+    timeformat: 'unixtime',
+  });
+  const data = await getJSON(`${FORECAST_URL}?${params}`, signal);
+  // a single place comes back as an object, several as an array
+  return (Array.isArray(data) ? data : [data]).map(d => {
+    const c = d.current || {};
+    const rain = c.rain, showers = c.showers;
+    return {
+      offset: d.utc_offset_seconds || 0,
+      now: {
+        time: c.time,
+        temp: c.temperature_2m,
+        code: c.weather_code,
+        isDay: !!c.is_day,
+        wind: c.wind_speed_10m,
+        isNow: true,
+        data: {
+          rain: rain === undefined && showers === undefined ? undefined : (rain || 0) + (showers || 0),
+          snow: c.snowfall,
+          vis: c.visibility,
+          gust: c.wind_gusts_10m,
+        },
+      },
+    };
+  });
+}
+
 export async function reverseGeocode(lat, lon) {
   try {
     const params = new URLSearchParams({ latitude: lat, longitude: lon, localityLanguage: 'en' });

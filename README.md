@@ -54,6 +54,7 @@ js/conditions.js  WMO code -> label + effects (successor of icons.js)
 js/palette.js     original colours, blended
 js/scene.js       canvas particles
 js/cities.js      world capitals for random mode
+js/explore.js     Explore in search: extreme places, ranked by live weather
 sw.js             offline cache
 ```
 
