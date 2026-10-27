@@ -1,5 +1,5 @@
 /* ======================================================================
-   TIMECAST COLOUR TOKENS
+   HUECAST COLOUR TOKENS
    Every colour in the app is defined here once. CSS uses them through
    var(), and the sky engine (js/palette.js) reads the palette tokens, so
    changing a value here changes it everywhere.

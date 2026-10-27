@@ -1,5 +1,5 @@
 /*!
- Name: Timecast v3
+ Name: Huecast v3
  Author: Carlos March - http://carlosmarch.es
  Created: 5 feb 2016 - Rebuilt: 2026
  Data: Open-Meteo, BigDataCloud
@@ -793,10 +793,10 @@ function shareText() {
 
 async function pictureFile() {
   const blob = await renderPicture({ sky: state.sky, sceneCanvas: $('.scene'), root: el.app });
-  const city = (state.place?.label || 'timecast').split(',')[0].toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const city = (state.place?.label || 'huecast').split(',')[0].toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const local = new Date(Date.now() + (state.forecast?.offset || 0) * 1000);
   const stamp = `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}-${pad(local.getUTCHours())}${pad(local.getUTCMinutes())}`;
-  return new File([blob], `timecast-${city}-${stamp}.png`, { type: 'image/png' });
+  return new File([blob], `huecast-${city}-${stamp}.png`, { type: 'image/png' });
 }
 
 /* Save as picture: a PNG of the screen. Downloads it; in the installed
@@ -849,7 +849,7 @@ function saveScene() {
 }
 
 async function share() {
-  const data = { title: 'Timecast', text: shareText(), url: shareLink() };
+  const data = { title: 'Huecast', text: shareText(), url: shareLink() };
   try {
     if (navigator.share) {
       // with the picture where the platform supports sharing files

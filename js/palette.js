@@ -1,4 +1,4 @@
-/* Background colours. Same palette as the original Timecast, but
+/* Background colours. Same palette as the 2016 version (then called Timecast), but
  * blended between stops instead of jumping from bucket to bucket.
  * Blending happens in OKLCH so in-between colours stay clean
  * (purple -> yellow passes through pink, not olive).

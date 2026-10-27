@@ -1,10 +1,10 @@
-/* Timecast service worker
+/* Huecast service worker
  * App files: network first, so a new deploy shows up on the next load;
  * the cached copy is only used offline.
  * Fonts: cache first, refreshed in the background (they never change).
  * Weather API: network first, last response as offline fallback.
  */
-const VERSION = 'timecast-v3.13.0';
+const VERSION = 'huecast-v3.14.0';
 const SHELL = [
   './',
   'index.html',

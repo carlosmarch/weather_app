@@ -1,6 +1,6 @@
 {
-  "name": "Timecast",
-  "short_name": "Timecast",
+  "name": "Huecast",
+  "short_name": "Huecast",
   "description": "The weather as a picture.",
   "start_url": "./",
   "scope": "./",

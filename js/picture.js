@@ -113,7 +113,7 @@ export async function renderPicture({ sky, sceneCanvas, root }) {
 
   // 6. signature
   const ink = getComputedStyle(root.querySelector('#city')).color;
-  drawText(ctx, 'TIMECAST', { x: 0, y: 14, w: W, h: 16 }, null, { font: `700 9px Montserrat, sans-serif`, color: ink, spacing: 0.35 * 9, center: true, alpha: 0.7 });
+  drawText(ctx, 'HUECAST', { x: 0, y: 14, w: W, h: 16 }, null, { font: `700 9px Montserrat, sans-serif`, color: ink, spacing: 0.35 * 9, center: true, alpha: 0.7 });
 
   return new Promise(res => canvas.toBlob(res, 'image/png'));
 }
