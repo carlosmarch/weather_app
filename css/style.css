@@ -787,6 +787,41 @@ a.menu__item { color: inherit; text-decoration: none; }
 
 .search__heading:first-child { margin-top: 8px; }
 
+/* Explore themes: a row of pills that wraps */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 12px 8px;
+}
+
+.chip {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 16px;
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke);
+  color: var(--on-glass);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.chip:hover,
+.chip:focus-visible {
+  outline: none;
+  background: var(--glass-hover);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke-strong);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--on-glass);
+  color: var(--ink-dark);
+  box-shadow: none;
+}
+
 /* A place: name + region, with a pin toggle on the right */
 .place {
   display: flex;

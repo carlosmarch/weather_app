@@ -35,13 +35,13 @@ Geolocation needs `localhost` or HTTPS.
 
 ## URL options
 
-- `?lat=40.4&lon=-3.7&name=Madrid` opens a fixed place (search and random city set this, so links can be shared)
+- `?lat=40.4&lon=-3.7&name=Madrid` opens a fixed place (search and the dice set this, so links can be shared)
 - `?city=random` opens a random capital city
 - `?demo` uses fake data with no network calls (the old development mode). You can pin values, e.g. `?demo&code=95&temp=24&hour=22&wind=40`. `code` is a [WMO weather code](https://open-meteo.com/en/docs#weather_variable_documentation).
 
 ## Shortcuts
 
-`/` or `Ctrl/⌘ K` search · `R` random city · `←` `→` move through the forecast hours
+`/` or `Ctrl/⌘ K` search · `R` random extreme weather · `←` `→` move through the forecast hours
 
 ## Files
 
@@ -54,6 +54,7 @@ js/conditions.js  WMO code -> label + effects (successor of icons.js)
 js/palette.js     original colours, blended
 js/scene.js       canvas particles
 js/cities.js      world capitals for random mode
+js/explore.js     Explore in search: extreme places, ranked by live weather
 sw.js             offline cache
 ```
 
