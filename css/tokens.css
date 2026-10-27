@@ -14,9 +14,14 @@
   --time-dusk:    #56132A; /* ~17:30 */
   --time-evening: #1F1F1F; /* ~21:30 */
 
-  /* ---- Sky palette: temperature (original 2016 colours) ---- */
-  --temp-freezing: #24303F; /* -10° */
-  --temp-too-cold: #393E46; /*   3° */
+  /* ---- Sky palette: temperature ----
+     Below 8°: ice scale, colder is deeper blue, 0° is frost.
+     From 8° up: the original 2016 colours. */
+  --temp-polar:    #16224A; /* -20° */
+  --temp-ice:      #24508C; /* -10° */
+  --temp-glacier:  #3A78AB; /*  -5° */
+  --temp-frost:    #6AA2C4; /*   0° */
+  --temp-chilly:   #4A5A6A; /*   4° */
   --temp-cold:     #48466D; /*   8° */
   --temp-warm:     #F8A79B; /* 12.5° */
   --temp-hot:      #FFD460; /* 17.5° */
@@ -40,6 +45,10 @@
   --sun-glow-end: rgba(255, 255, 255, 0);
   --sun-edge: rgba(0, 0, 0, 0.05);          /* outline on pale skies */
   --moon-fill: rgba(255, 255, 255, 0.2);
+  /* ice halo ring (below -5°): warm inner edge, white, cool outer edge */
+  --halo-warm: rgba(255, 214, 196, 0.24);
+  --halo-white: rgba(255, 255, 255, 0.34);
+  --halo-cool: rgba(196, 220, 255, 0.2);
   --particle: var(--white);                 /* rain, snow, clouds, fog */
 
   /* ---- Text (light skies switch these, see style.css) ---- */

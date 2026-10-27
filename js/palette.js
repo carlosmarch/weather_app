@@ -6,8 +6,11 @@
 
 // [celsius, colour token] - midpoints of the original temperature buckets
 const TEMP_STOPS = [
-  [-10,  '--temp-freezing'],
-  [3,    '--temp-too-cold'],
+  [-20,  '--temp-polar'],
+  [-10,  '--temp-ice'],
+  [-5,   '--temp-glacier'],
+  [0,    '--temp-frost'],
+  [4,    '--temp-chilly'],
   [8,    '--temp-cold'],
   [12.5, '--temp-warm'],
   [17.5, '--temp-hot'],
@@ -53,6 +56,34 @@ export function desaturate(hex, sat) {
   if (sat >= 1) return hex;
   const [l, c, h] = hexToOklch(hex);
   return oklchToHex([l * (0.92 + 0.08 * sat), c * sat, h]);
+}
+
+/* Night: darken toward the night colour but keep most of the hue and
+   colour, so a -10° night is a deep blue and a mild night stays warm */
+export function nightShade(hex, night, t = 0.55) {
+  const [l, c, h] = hexToOklch(hex);
+  const [ln] = hexToOklch(night);
+  return oklchToHex([l + (ln - l) * t, c * (1 - 0.45 * t), h]);
+}
+
+/* Lift toward white: snowy skies are bright, not grey */
+export function lift(hex, amount) {
+  if (!amount) return hex;
+  const [l, c, h] = hexToOklch(hex);
+  return oklchToHex([l + (1 - l) * amount, c * (1 - amount * 0.4), h]);
+}
+
+/* The two sky colours for an hour: time of day and temperature, adjusted
+   for night and weather. Shared by the app, the picture and the info page */
+export function skyColors({ hour, temp, isDay, fx }) {
+  const hourColor = colorByHour(hour);
+  let tempColor = colorByCelsius(temp);
+  if (!isDay) tempColor = nightShade(tempColor, hourColor, 0.55);
+  const timeColor = desaturate(hourColor, fx.sat);
+  tempColor = desaturate(tempColor, fx.sat);
+  // snow brightens the sky (less so at night)
+  const up = (fx.lift || 0) * (isDay ? 1 : 0.4);
+  return { timeColor: lift(timeColor, up), tempColor: lift(tempColor, up) };
 }
 
 /* Sun intensity, from the original returnColorByCelsius side effects */

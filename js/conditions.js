@@ -48,11 +48,12 @@ export const STEPS = {
     { name: 'Violent',    max: Infinity, drops: 280, clouds: 15, darken: 0.35 },
   ] },
   snow: { unit: 'cm/h', steps: [
-    { name: 'Flurries', max: 0.2,      flakes: 25,  clouds: 5 },
-    { name: 'Light',    max: 1,        flakes: 50,  clouds: 8 },
-    { name: 'Moderate', max: 2.5,      flakes: 90,  clouds: 11, darken: 0.1 },
-    { name: 'Heavy',    max: 5,        flakes: 140, clouds: 14, darken: 0.15 },
-    { name: 'Blizzard', max: Infinity, flakes: 200, clouds: 15, darken: 0.2, wind: 4 },
+    // snow brightens the sky (lift) instead of greying it
+    { name: 'Flurries', max: 0.2,      flakes: 25,  clouds: 5,  lift: 0.06 },
+    { name: 'Light',    max: 1,        flakes: 50,  clouds: 8,  lift: 0.12 },
+    { name: 'Moderate', max: 2.5,      flakes: 90,  clouds: 11, lift: 0.18 },
+    { name: 'Heavy',    max: 5,        flakes: 140, clouds: 14, lift: 0.24 },
+    { name: 'Blizzard', max: Infinity, flakes: 200, clouds: 15, lift: 0.3, wind: 4 },
   ] },
   // visibility in metres: lower is thicker, so steps go from clear to dense
   fog: { unit: 'visibility', steps: [
@@ -135,6 +136,7 @@ export function getCondition(code, windKmh = 0, data = {}) {
   if (levels.snow) {
     const s = STEPS.snow.steps[levels.snow - 1];
     fx.snow = s.flakes; fx.snowLevel = levels.snow; take(s);
+    fx.lift = s.lift;
     if (s.wind) levels.wind = Math.max(levels.wind, s.wind);
   }
   if (levels.fog) {
@@ -155,9 +157,10 @@ export function getCondition(code, windKmh = 0, data = {}) {
   fx.slant = Math.min(Math.max(wind, levels.wind >= 5 ? 50 : 0) / 60, 0.6);
 
   // Clouds, fog and precipitation drain colour from the sky...
-  const wet = fx.rain || fx.snow ? 0.1 : 0;
+  const wet = fx.rain ? 0.1 : 0;
   const sat = 1 - (fx.clouds || 0) * 0.025 - (fx.darken || 0) * 1.2 - (fx.fog || 0) * 0.04 - wet;
   fx.sat = Math.min(Math.max(sat, 0.4), 1);
+  if (levels.snow && !levels.rain) fx.sat = Math.max(fx.sat, 0.7); // snow keeps colour
   // ...and hide the sun behind a veil
   fx.veil = (fx.clouds || 0) >= 10 || levels.fog >= 2;
 
@@ -171,5 +174,13 @@ export function weatherMarks(levels) {
   if (!rain && !snow) return null;
   if (snow && snow >= rain) return { snow: true, count: Math.ceil((snow * 3) / 5) };
   return { snow: false, count: Math.ceil(rain / 2) };
+}
+
+/* Ice halo around the sun or moon on very cold, fairly clear days:
+   0 = none, up to 1 (faint from -5°, full at -15°) */
+export const HALO_BELOW = -5;
+export function iceHalo(temp, levels) {
+  if (temp > HALO_BELOW || levels.rain || levels.snow >= 3 || levels.fog >= 2) return 0;
+  return Math.min(1, 0.55 + (HALO_BELOW - temp) * 0.045);
 }
 

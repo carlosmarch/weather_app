@@ -365,6 +365,24 @@ a.tool { color: inherit; text-decoration: none; }
 /* 40°+: a wider, brighter glow */
 .sun.is-blazing::before { inset: -150%; }
 
+/* Very cold: ice halo, a thin ring well outside the sun or moon
+   (warm inner edge, white, cool outer edge), breathing slowly */
+.halo {
+  position: absolute;
+  inset: -95%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    transparent 80%, var(--halo-warm) 85%, var(--halo-white) 88.5%, var(--halo-cool) 92%, transparent 96%);
+  opacity: var(--halo, 0.8);
+  pointer-events: none;
+  animation: fadeIn 2s ease both, haloBreathe 7s ease-in-out 2s infinite alternate;
+}
+
+@keyframes haloBreathe {
+  from { opacity: var(--halo, 0.8); }
+  to   { opacity: calc(var(--halo, 0.8) * 0.7); }
+}
+
 /* ======================================================================
    TIMELINE - next 24 hours, drag to scrub
    ====================================================================== */

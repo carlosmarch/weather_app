@@ -7,8 +7,8 @@
  */
 
 import { getForecast, reverseGeocode, searchCity, getPosition } from './weather.js';
-import { getCondition, weatherMarks, CODES } from './conditions.js';
-import { colorByCelsius, colorByHour, desaturate, sunIntensity, starsByHour, luminance, mix } from './palette.js';
+import { getCondition, weatherMarks, iceHalo, CODES } from './conditions.js';
+import { skyColors, sunIntensity, starsByHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
 import { renderPicture } from './picture.js';
@@ -216,10 +216,11 @@ function render() {
   el.themeColor.content = timeColor;
 
   // Sun or moon
-  makeDayOrNight(isDay, h.temp, cond.fx.veil);
+  const halo = iceHalo(h.temp, cond.levels);
+  makeDayOrNight(isDay, h.temp, cond.fx.veil, halo);
   const sun = isDay && !cond.fx.veil ? sunIntensity(h.temp) : {};
   state.sky = { timeColor, tempColor, darken: cond.fx.darken || 0, inkDark: lum > 0.55, isDay,
-    veiled: !!cond.fx.veil, shining: !!sun.shining, blazing: !!sun.blazing, label: cond.label };
+    veiled: !!cond.fx.veil, shining: !!sun.shining, blazing: !!sun.blazing, halo, label: cond.label };
 
   // Environment particles
   const stars = isDay ? 0 : starsByHour(hour) || 40;
@@ -240,18 +241,9 @@ function skyFor(h, offset) {
   const hour = local.getUTCHours() + local.getUTCMinutes() / 60;
 
   const cond = getCondition(h.code, h.wind, h.data);
-  const hourColor = colorByHour(hour);
-  let tempColor = colorByCelsius(h.temp);
-  // At night the temperature colour sinks into the dark, so a mild
-  // night still reads as night instead of dusk
-  if (!h.isDay) tempColor = mix(tempColor, hourColor, 0.55);
-  return {
-    local,
-    hour,
-    cond,
-    timeColor: desaturate(hourColor, cond.fx.sat),
-    tempColor: desaturate(tempColor, cond.fx.sat),
-  };
+  // night darkens but keeps the colour; weather drains or (snow) lifts it
+  const { timeColor, tempColor } = skyColors({ hour, temp: h.temp, isDay: h.isDay, fx: cond.fx });
+  return { local, hour, cond, timeColor, tempColor };
 }
 
 function gradient(el, angle, from, to) {
@@ -271,15 +263,22 @@ function paintSky(timeColor, tempColor) {
   state.skyIndex ^= 1;
 }
 
-function makeDayOrNight(isDay, celsius, veiled) {
+function makeDayOrNight(isDay, celsius, veiled, halo = 0) {
   // a sun behind clouds or fog doesn't shine or pulse
   const { pulses = 0, big, shining, blazing, duration = 3 } = isDay && !veiled ? sunIntensity(celsius) : {};
   // keep the element (and its animations) when nothing visible changes
-  const key = isDay ? `sun|${veiled}|${pulses}|${big}|${shining}|${blazing}` : 'moon';
+  const key = (isDay ? `sun|${veiled}|${pulses}|${big}|${shining}|${blazing}` : 'moon') + `|${halo.toFixed(1)}`;
   if (key === state.iconKey) return;
   state.iconKey = key;
 
   el.icon.textContent = '';
+  // very cold: an ice halo ring around the sun or moon
+  if (halo) {
+    const ring = document.createElement('div');
+    ring.className = 'halo';
+    ring.style.setProperty('--halo', halo.toFixed(2));
+    el.icon.append(ring);
+  }
   const body = document.createElement('div');
   if (isDay) {
     body.className = 'sun' + (shining ? ' shining' : '') + (blazing ? ' is-blazing' : '') + (veiled ? ' is-veiled' : '');

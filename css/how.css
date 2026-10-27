@@ -260,6 +260,20 @@ h3 span {
 .orb i.big { animation-name: pulse2x; }
 .orb--sun.is-blazing::before { inset: -150%; }
 
+/* ice halo ring, same drawing as the app's .halo */
+.tile__halo {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 98.6%; /* 2.9 x the orb */
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    transparent 80%, var(--halo-warm) 85%, var(--halo-white) 88.5%, var(--halo-cool) 92%, transparent 96%);
+  pointer-events: none;
+}
+
 /* ---- Colour strips ---- */
 .strip { margin: 18px 0; }
 

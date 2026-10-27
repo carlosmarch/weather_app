@@ -1,8 +1,8 @@
 /* "How it works" page: every demo is drawn with the app's own code
    (palette, conditions, scene), so it always matches the app. */
 
-import { colorByCelsius, colorByHour, desaturate, mix, luminance, sunIntensity, SUN_STEPS, token } from './palette.js';
-import { getCondition, weatherMarks, STEPS, CALM_WIND, MIST_VISIBILITY } from './conditions.js';
+import { colorByCelsius, colorByHour, skyColors, mix, luminance, sunIntensity, SUN_STEPS, token } from './palette.js';
+import { getCondition, weatherMarks, iceHalo, STEPS, CALM_WIND, MIST_VISIBILITY } from './conditions.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
 
@@ -20,13 +20,9 @@ $('#back').addEventListener('click', e => {
 /* Same recipe as the app's skyFor() */
 function sky(hour, temp, code = 0, wind = 10, data = {}, isDay = hour >= 7 && hour < 19) {
   const cond = getCondition(code, wind, data);
-  const hourColor = colorByHour(hour);
-  let tempColor = colorByCelsius(temp);
-  if (!isDay) tempColor = mix(tempColor, hourColor, 0.55);
-  const timeColor = desaturate(hourColor, cond.fx.sat);
-  tempColor = desaturate(tempColor, cond.fx.sat);
+  const { timeColor, tempColor } = skyColors({ hour, temp, isDay, fx: cond.fx });
   const ink = luminance(mix(timeColor, tempColor)) > 0.55 ? token('--ink-dark') : token('--ink-light');
-  return { cond, isDay, timeColor, tempColor, ink };
+  return { cond, isDay, timeColor, tempColor, ink, halo: iceHalo(temp, cond.levels) };
 }
 
 function gradient(el, angle, from, to) {
@@ -71,6 +67,12 @@ function tile({ hour, temp, code = 0, wind = 10, data = {}, title, sub, live = f
     v.className = 'tile__veil';
     v.style.opacity = s.cond.fx.darken;
     t.append(v);
+  }
+  if (s.halo) {
+    const ring = document.createElement('div');
+    ring.className = 'tile__halo';
+    ring.style.opacity = s.halo;
+    t.append(ring);
   }
   t.append(orb(s, temp));
   const c = document.createElement('div');
@@ -136,12 +138,14 @@ $('#demo-circles').append(
   ...sunTiles,
   tile({ hour: 12, temp: 16, code: 3, title: 'Clouds', sub: 'veiled sun' }),
   tile({ hour: 23, temp: 14, title: 'Night', sub: 'moon, stars', live: true }),
+  tile({ hour: 12, temp: -12, title: 'Below −5°', sub: 'ice halo' }),
+  tile({ hour: 23, temp: -15, title: 'Cold night', sub: 'halo, stars', live: true }),
 );
 
 /* 02 · The sky: the two scales, then examples */
 const timeStops = Array.from({ length: 25 }, (_, h) => `${colorByHour(h)} ${(h / 24 * 100).toFixed(1)}%`);
 $('#strip-time').style.background = `linear-gradient(90deg, ${timeStops.join(', ')})`;
-const temps = Array.from({ length: 19 }, (_, i) => -10 + i * 2.5);
+const temps = Array.from({ length: 25 }, (_, i) => -20 + i * 2.5); // -20° .. 40°
 const tempStops = temps.map((t, i) => `${colorByCelsius(t)} ${(i / (temps.length - 1) * 100).toFixed(1)}%`);
 $('#strip-temp').style.background = `linear-gradient(90deg, ${tempStops.join(', ')})`;
 

@@ -70,6 +70,21 @@ export async function renderPicture({ sky, sceneCanvas, root }) {
     ctx.stroke();
   }
 
+  // ice halo ring (same stops as the CSS .halo)
+  if (sky.halo) {
+    const hr = r * 2.9;
+    const ring = ctx.createRadialGradient(cx, cy, 0, cx, cy, hr);
+    ring.addColorStop(0.8, 'rgba(0,0,0,0)');
+    ring.addColorStop(0.85, token('--halo-warm'));
+    ring.addColorStop(0.885, token('--halo-white'));
+    ring.addColorStop(0.92, token('--halo-cool'));
+    ring.addColorStop(0.96, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = sky.halo;
+    ctx.fillStyle = ring;
+    ctx.fillRect(cx - hr, cy - hr, hr * 2, hr * 2);
+    ctx.globalAlpha = 1;
+  }
+
   // 4. text, each element where it sits on screen
   for (const sel of ['#condition', '#temp .temp__num', '#temp sup', '#temp small', '#city', '#date',
                      '#timeline-low', '#timeline-label', '#timeline-high']) {
