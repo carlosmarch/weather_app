@@ -476,6 +476,10 @@ button {
   box-shadow: inset 0 0 0 1px var(--bar-stroke-selected), 0 0 0 1.5px var(--ink);
 }
 
+/* Clean view: the bars shrink with the buttons; scrubbing grows them back */
+.timeline { --clean-h: 52px; }
+.is-clean .timeline:not(.is-active) { --track-h: var(--clean-h); }
+
 /* Growing while scrubbing (touch) or hovering (mouse) */
 .timeline.is-active { --track-h: 116px; }
 .timeline.is-active .timeline__label { transform: scale(1.25); }
@@ -980,6 +984,7 @@ a.menu__item { color: inherit; text-decoration: none; }
   .timeline { --line-b: 3px; }
   .timeline { --track-h: 54px; }
   .timeline.is-active { --track-h: 76px; }
+  .timeline { --clean-h: 42px; }
   .timeline__head { margin-bottom: 4px; }
   :root { --icon: 72px; }
 }
@@ -990,6 +995,7 @@ a.menu__item { color: inherit; text-decoration: none; }
   .timeline { --line-b: 19px; }
   .timeline { --track-h: 84px; }
   .timeline.is-active { --track-h: 130px; }
+  .timeline { --clean-h: 64px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
