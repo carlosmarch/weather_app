@@ -196,6 +196,39 @@ strong { color: var(--ink); font-weight: 600; }
   opacity: 0.8;
 }
 
+/* Rows of steps: swipe sideways on phones */
+h3 {
+  margin: 26px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+h3 span {
+  margin-left: 8px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+
+.steps {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: clamp(96px, 28%, 112px);
+  gap: 8px;
+  margin: 12px calc(-1 * var(--gutter)) 8px;
+  padding: 0 var(--gutter) 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.steps::-webkit-scrollbar { display: none; }
+.steps > .tile { scroll-snap-align: start; }
+
 /* mini sun and moon: same drawing as the app, smaller */
 .orb {
   position: absolute;
@@ -234,9 +267,8 @@ strong { color: var(--ink); font-weight: 600; }
   animation: pulse 3s ease-out infinite;
 }
 
-.orb i.big { animation-name: pulse2x; animation-duration: 2.5s; }
-.orb i:nth-child(2) { animation-delay: 1s; }
-.orb i:nth-child(3) { animation-delay: 2s; }
+.orb i.big { animation-name: pulse2x; }
+.orb--sun.is-blazing::before { inset: -150%; }
 
 /* ---- Colour strips ---- */
 .strip { margin: 18px 0; }
@@ -329,6 +361,7 @@ strong { color: var(--ink); font-weight: 600; }
 }
 
 .bar__wx i { width: 1px; height: 6px; background: var(--ink-soft); }
+.bar__wx.is-snow { flex-direction: column; align-items: center; }
 .bar__wx.is-snow i { width: 3px; height: 3px; border-radius: 50%; }
 
 .timeline__night {

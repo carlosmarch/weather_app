@@ -7,7 +7,7 @@
  */
 
 import { getForecast, reverseGeocode, searchCity, getPosition } from './weather.js';
-import { getCondition, CODES } from './conditions.js';
+import { getCondition, weatherMarks, CODES } from './conditions.js';
 import { colorByCelsius, colorByHour, desaturate, sunIntensity, starsByHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
@@ -233,7 +233,7 @@ function skyFor(h, offset) {
   const local = new Date(ts + offset * 1000);
   const hour = local.getUTCHours() + local.getUTCMinutes() / 60;
 
-  const cond = getCondition(h.code, h.wind);
+  const cond = getCondition(h.code, h.wind, h.data);
   const hourColor = colorByHour(hour);
   let tempColor = colorByCelsius(h.temp);
   // At night the temperature colour sinks into the dark, so a mild
@@ -267,19 +267,22 @@ function paintSky(timeColor, tempColor) {
 
 function makeDayOrNight(isDay, celsius, veiled) {
   // a sun behind clouds or fog doesn't shine or pulse
-  const { pulses = 0, big, shining } = isDay && !veiled ? sunIntensity(celsius) : {};
+  const { pulses = 0, big, shining, blazing, duration = 3 } = isDay && !veiled ? sunIntensity(celsius) : {};
   // keep the element (and its animations) when nothing visible changes
-  const key = isDay ? `sun|${veiled}|${pulses}|${big}|${shining}` : 'moon';
+  const key = isDay ? `sun|${veiled}|${pulses}|${big}|${shining}|${blazing}` : 'moon';
   if (key === state.iconKey) return;
   state.iconKey = key;
 
   el.icon.textContent = '';
   const body = document.createElement('div');
   if (isDay) {
-    body.className = 'sun' + (shining ? ' shining' : '') + (veiled ? ' is-veiled' : '');
+    body.className = 'sun' + (shining ? ' shining' : '') + (blazing ? ' is-blazing' : '') + (veiled ? ' is-veiled' : '');
+    // pulses evenly spaced over one cycle
     for (let i = 0; i < pulses; i++) {
       const p = document.createElement('div');
       p.className = big ? 'sun-pulse2x' : 'sun-pulse';
+      p.style.animationDuration = `${duration}s`;
+      p.style.animationDelay = `${(i * duration / pulses).toFixed(2)}s`;
       body.append(p);
     }
   } else {
@@ -366,11 +369,11 @@ function buildTimeline() {
     gradient(bar, 'to top', timeColor, tempColor);
 
     // precipitation marks: rain ticks / snow dots, more for heavier
-    const amount = Math.max(cond.fx.rain || 0, cond.fx.snow || 0);
-    if (amount) {
+    const marks = weatherMarks(cond.levels);
+    if (marks) {
       const wx = document.createElement('span');
-      wx.className = 'bar__wx' + ((cond.fx.snow || 0) > (cond.fx.rain || 0) ? ' is-snow' : '');
-      wx.innerHTML = '<i></i>'.repeat(amount < 50 ? 1 : amount < 110 ? 2 : 3);
+      wx.className = 'bar__wx' + (marks.snow ? ' is-snow' : '');
+      wx.innerHTML = '<i></i>'.repeat(marks.count);
       bar.append(wx);
     }
 
@@ -430,7 +433,7 @@ function markSelected() {
   [...el.track.children].forEach((b, i) => b.classList.toggle('is-selected', i === state.selected));
   el.track.setAttribute('aria-valuenow', state.selected);
   const h = state.forecast.hours[state.selected];
-  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${Math.round(h.temp)} degrees, ${getCondition(h.code).label}`);
+  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${Math.round(h.temp)} degrees, ${getCondition(h.code, h.wind, h.data).label}`);
 }
 
 /* Dock-style magnification: bars near the pointer grow taller and wider,
@@ -704,6 +707,8 @@ function startDemo(params) {
     temp: num('temp', Math.round(Math.random() * 45 - 8)),
     hour: num('hour', Math.random() * 24),
     wind: num('wind', Math.random() * 40),
+    // optional measured amounts: &rain= mm/h, &snow= cm/h, &vis= m, &gust= km/h
+    data: { rain: num('rain'), snow: num('snow'), vis: num('vis'), gust: num('gust') },
     label: params.get('name') || cityLabel(c),
   });
 }
@@ -712,7 +717,7 @@ function randomDemo() {
   startDemo(new URLSearchParams());
 }
 
-function buildDemo({ code, temp, hour, wind, label }) {
+function buildDemo({ code, temp, hour, wind, data = {}, label }) {
   // Pretend the location's clock reads `hour` right now
   const nowUtc = Date.now();
   const d = new Date(nowUtc);
@@ -724,7 +729,7 @@ function buildDemo({ code, temp, hour, wind, label }) {
     return lh >= 7 && lh < 20;
   };
 
-  const hours = [{ time: Math.floor(nowUtc / 1000), temp, code, isDay: isDayAt(nowUtc / 1000), wind, isNow: true }];
+  const hours = [{ time: Math.floor(nowUtc / 1000), temp, code, isDay: isDayAt(nowUtc / 1000), wind, data, isNow: true }];
   for (let i = 0; i < 24; i++) {
     const t = startHour + i * 3600;
     const lh = new Date((t + offset) * 1000).getUTCHours();
@@ -732,6 +737,7 @@ function buildDemo({ code, temp, hour, wind, label }) {
       time: t,
       temp: temp + Math.sin(((lh - 9) / 24) * Math.PI * 2) * 4 - 2 + Math.random(),
       code: i < 6 ? code : CODES[Math.floor(Math.random() * CODES.length)],
+      data: i < 6 ? data : {},
       isDay: isDayAt(t),
       wind,
     });

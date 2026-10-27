@@ -13,7 +13,7 @@ export async function getForecast(lat, lon) {
     latitude: lat,
     longitude: lon,
     current: 'temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m',
-    hourly: 'temperature_2m,weather_code,is_day,wind_speed_10m',
+    hourly: 'temperature_2m,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility',
     forecast_days: 2,
     timezone: 'auto',
     timeformat: 'unixtime',
@@ -22,6 +22,22 @@ export async function getForecast(lat, lon) {
   const offset = data.utc_offset_seconds || 0;
   const c = data.current;
 
+  // Amounts that drive the intensity steps (rain mm/h, snow cm/h,
+  // visibility m, gusts km/h); missing values stay undefined
+  const h = data.hourly;
+  const at = (key, i) => (h[key] && typeof h[key][i] === 'number' ? h[key][i] : undefined);
+  const amounts = i => {
+    const rain = at('rain', i), showers = at('showers', i);
+    return {
+      rain: rain === undefined && showers === undefined ? undefined : (rain || 0) + (showers || 0),
+      snow: at('snowfall', i),
+      vis: at('visibility', i),
+      gust: at('wind_gusts_10m', i),
+    };
+  };
+  // the hourly row covering "now" gives the current amounts
+  const nowRow = h.time.findIndex(t => t <= c.time && c.time < t + 3600);
+
   const now = {
     time: c.time,
     temp: c.temperature_2m,
@@ -29,10 +45,10 @@ export async function getForecast(lat, lon) {
     code: c.weather_code,
     isDay: !!c.is_day,
     wind: c.wind_speed_10m,
+    data: nowRow >= 0 ? amounts(nowRow) : {},
   };
 
   // Next 24 hours, starting with the current conditions
-  const h = data.hourly;
   const hours = [{ ...now, isNow: true }];
   for (let i = 0; i < h.time.length && hours.length < 25; i++) {
     if (h.time[i] <= c.time) continue;
@@ -42,6 +58,7 @@ export async function getForecast(lat, lon) {
       code: h.weather_code[i],
       isDay: !!h.is_day[i],
       wind: h.wind_speed_10m[i],
+      data: amounts(i),
     });
   }
 

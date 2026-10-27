@@ -1,8 +1,8 @@
 /* "How it works" page: every demo is drawn with the app's own code
    (palette, conditions, scene), so it always matches the app. */
 
-import { colorByCelsius, colorByHour, desaturate, mix, luminance, sunIntensity, token } from './palette.js';
-import { getCondition } from './conditions.js';
+import { colorByCelsius, colorByHour, desaturate, mix, luminance, sunIntensity, SUN_STEPS, token } from './palette.js';
+import { getCondition, weatherMarks, STEPS, CALM_WIND, MIST_VISIBILITY } from './conditions.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
 
@@ -18,8 +18,8 @@ $('#back').addEventListener('click', e => {
 });
 
 /* Same recipe as the app's skyFor() */
-function sky(hour, temp, code = 0, wind = 10, isDay = hour >= 7 && hour < 19) {
-  const cond = getCondition(code, wind);
+function sky(hour, temp, code = 0, wind = 10, data = {}, isDay = hour >= 7 && hour < 19) {
+  const cond = getCondition(code, wind, data);
   const hourColor = colorByHour(hour);
   let tempColor = colorByCelsius(temp);
   if (!isDay) tempColor = mix(tempColor, hourColor, 0.55);
@@ -34,6 +34,7 @@ function gradient(el, angle, from, to) {
   el.style.background = `linear-gradient(${angle} in oklch, ${from}, ${to})`;
 }
 
+/* mini sun or moon, drawn like the app's */
 function orb(s, temp) {
   const o = document.createElement('div');
   if (!s.isDay) {
@@ -41,18 +42,26 @@ function orb(s, temp) {
     return o;
   }
   const veiled = s.cond.fx.veil;
-  const { pulses = 0, big, shining } = veiled ? {} : sunIntensity(temp);
-  o.className = 'orb orb--sun' + (shining ? ' is-shining' : '') + (veiled ? ' is-veiled' : '');
+  const { pulses = 0, big, shining, blazing, duration = 3 } = veiled ? {} : sunIntensity(temp);
+  o.className = 'orb orb--sun' + (shining ? ' is-shining' : '') + (blazing ? ' is-blazing' : '') + (veiled ? ' is-veiled' : '');
   for (let i = 0; i < pulses; i++) {
     const p = document.createElement('i');
     if (big) p.className = 'big';
+    p.style.animationDuration = `${duration}s`;
+    p.style.animationDelay = `${(i * duration / pulses).toFixed(2)}s`;
     o.append(p);
   }
   return o;
 }
 
-function tile({ hour, temp, code = 0, wind = 10, title, sub }) {
-  const s = sky(hour, temp, code, wind);
+/* Live scenes only animate while on screen */
+const visible = new IntersectionObserver(entries => {
+  for (const e of entries) e.target.scene?.[e.isIntersecting ? 'resume' : 'pause']();
+}, { rootMargin: '80px' });
+
+/* A small sky; live = with weather particles */
+function tile({ hour, temp, code = 0, wind = 10, data = {}, title, sub, live = false }) {
+  const s = sky(hour, temp, code, wind, data);
   const t = document.createElement('div');
   t.className = 'tile';
   gradient(t, '-65deg', s.timeColor, s.tempColor);
@@ -68,18 +77,46 @@ function tile({ hour, temp, code = 0, wind = 10, title, sub }) {
   c.className = 'tile__caption';
   c.innerHTML = `${title}${sub ? `<small>${sub}</small>` : ''}`;
   t.append(c);
-  return { el: t, sky: s };
+
+  if (live) {
+    const canvas = document.createElement('canvas');
+    t.prepend(canvas);
+    requestAnimationFrame(() => {
+      const scene = createScene(canvas, () => ({ top: canvas.clientHeight * 0.28, bottom: canvas.clientHeight * 0.52 }));
+      // lighter than full screen, same proportions between steps
+      const fx = { ...s.cond.fx };
+      for (const k of ['rain', 'snow', 'wind']) if (fx[k]) fx[k] = Math.ceil(fx[k] / 2);
+      if (fx.clouds) fx.clouds = Math.ceil(fx.clouds / 2);
+      scene.pause();
+      scene.set({ fx, stars: s.isDay ? 0 : 40, timeColor: s.timeColor });
+      t.scene = scene;
+      visible.observe(t);
+    });
+  }
+  return t;
 }
 
-/* 01 · The circle */
-const circles = [
-  { hour: 11, temp: 12, title: 'Under 15°' },
-  { hour: 12, temp: 17, title: '15° +', sub: 'one pulse' },
-  { hour: 14, temp: 26, title: '20° +', sub: 'glow, pulses' },
-  { hour: 12, temp: 16, code: 3, title: 'Clouds', sub: 'veiled' },
-  { hour: 23, temp: 14, title: 'Night', sub: 'moon' },
-];
-$('#demo-circles').append(...circles.map(c => tile(c).el));
+/* "0.5–2.5" style ranges from the step limits */
+const fmt = v => (v >= 10 || Number.isInteger(v) ? String(Math.round(v)) : String(v));
+function range(steps, i, floor) {
+  const lo = i === 0 ? floor : steps[i - 1].max;
+  const hi = steps[i].max;
+  if (hi === Infinity) return `${fmt(lo)}+`;
+  return i === 0 && !floor ? `< ${fmt(hi)}` : `${fmt(lo)}–${fmt(hi)}`;
+}
+
+/* 01 · The circle: every sun step, then clouds and night */
+const sunTiles = [...SUN_STEPS].reverse().map(st => {
+  const temp = st.min === -Infinity ? 12 : st.min + 2;
+  const title = st.min === -Infinity ? 'Under 15°' : `${st.min}° +`;
+  const sub = st.pulses ? `${st.name} · ${st.pulses} pulse${st.pulses > 1 ? 's' : ''}` : st.name;
+  return tile({ hour: 13, temp, title, sub });
+});
+$('#demo-circles').append(
+  ...sunTiles,
+  tile({ hour: 12, temp: 16, code: 3, title: 'Clouds', sub: 'veiled sun' }),
+  tile({ hour: 23, temp: 14, title: 'Night', sub: 'moon, stars', live: true }),
+);
 
 /* 02 · The sky: the two scales, then examples */
 const timeStops = Array.from({ length: 25 }, (_, h) => `${colorByHour(h)} ${(h / 24 * 100).toFixed(1)}%`);
@@ -94,28 +131,47 @@ const skies = [
   { hour: 12, temp: 9, code: 3, title: '12:00 · 9°', sub: 'overcast' },
   { hour: 10.5, temp: 18, code: 1, title: '10:30 · 18°', sub: 'pale: dark text' },
 ];
-$('#demo-skies').append(...skies.map(c => tile(c).el));
+$('#demo-skies').append(...skies.map(c => tile(c)));
 
-/* 03 · The weather: live scenes, lighter than full screen */
-const weather = [
-  { hour: 22, temp: 12, code: 63, title: 'Rain' },
-  { hour: 23, temp: -3, code: 73, title: 'Snow' },
-  { hour: 7.5, temp: 8, code: 45, title: 'Fog' },
-  { hour: 18, temp: 24, code: 95, wind: 40, title: 'Storm' },
-  { hour: 2, temp: 14, code: 0, title: 'Stars' },
-  { hour: 15, temp: 18, code: 2, wind: 50, title: 'Wind' },
+/* 03 · The weather: every step of each kind, live */
+const RAIN_AT = [0.3, 1.5, 5, 12, 35, 70];
+$('#demo-rain').append(...STEPS.rain.steps.map((st, i) => tile({
+  hour: 15, temp: 14, code: 63, data: { rain: RAIN_AT[i], snow: 0, vis: 20000 },
+  title: st.name, sub: range(STEPS.rain.steps, i), live: true,
+})));
+
+const SNOW_AT = [0.1, 0.6, 1.8, 3.5, 7];
+$('#demo-snow').append(...STEPS.snow.steps.map((st, i) => tile({
+  hour: 11, temp: -2, code: 73, data: { snow: SNOW_AT[i], rain: 0, vis: 20000 },
+  title: st.name, sub: range(STEPS.snow.steps, i), live: true,
+})));
+
+const FOG = [
+  { code: 2, vis: 2500, sub: `1–${MIST_VISIBILITY / 1000} km` },
+  { code: 45, vis: 500, sub: '200 m–1 km' },
+  { code: 45, vis: 100, sub: '< 200 m' },
 ];
-for (const w of weather) {
-  const { el, sky: s } = tile(w);
-  const canvas = document.createElement('canvas');
-  el.prepend(canvas);
-  $('#demo-weather').append(el);
-  const scene = createScene(canvas, () => ({ top: canvas.clientHeight * 0.28, bottom: canvas.clientHeight * 0.52 }));
-  const fx = { ...s.cond.fx };
-  for (const k of ['rain', 'snow', 'wind']) if (fx[k]) fx[k] = Math.ceil(fx[k] / 3);
-  if (fx.clouds) fx.clouds = Math.ceil(fx.clouds / 2);
-  scene.set({ fx, stars: s.isDay ? 0 : 40, timeColor: s.timeColor });
-}
+$('#demo-fog').append(...STEPS.fog.steps.map((st, i) => tile({
+  hour: 8, temp: 9, code: FOG[i].code, data: { vis: FOG[i].vis, rain: 0, snow: 0 },
+  title: st.name, sub: FOG[i].sub, live: true,
+})));
+
+const STORM = [
+  { code: 95, rain: 0.4, sub: 'little rain' },
+  { code: 95, rain: 5, sub: 'rain, lightning' },
+  { code: 96, rain: 6, sub: 'hail' },
+  { code: 99, rain: 15, sub: 'heavy hail' },
+];
+$('#demo-storm').append(...STEPS.storm.steps.map((st, i) => tile({
+  hour: 18, temp: 24, code: STORM[i].code, data: { rain: STORM[i].rain, vis: 20000 },
+  title: st.name, sub: STORM[i].sub, live: true,
+})));
+
+const WIND_AT = [18, 32, 45, 62, 90];
+$('#demo-wind').append(...STEPS.wind.steps.map((st, i) => tile({
+  hour: 14, temp: 18, code: 2, wind: WIND_AT[i], data: { rain: 0, snow: 0, vis: 20000 },
+  title: st.name, sub: range(STEPS.wind.steps, i, CALM_WIND), live: true,
+})));
 
 /* 04 · The timeline: a sample day you can scrub */
 const day = [
@@ -129,16 +185,16 @@ const n = day.length;
 const nightStops = [];
 day.forEach(([hour, code, temp], i) => {
   const isDay = hour >= 7 && hour < 19;
-  const s = sky(hour, temp, code, 10, isDay);
+  const s = sky(hour, temp, code, 10, {}, isDay);
   const bar = document.createElement('div');
   bar.className = 'bar';
   bar.style.height = `${18 + ((temp - tlow) / (thigh - tlow)) * 82}%`;
   gradient(bar, 'to top', s.timeColor, s.tempColor);
-  const amount = Math.max(s.cond.fx.rain || 0, s.cond.fx.snow || 0);
-  if (amount) {
+  const marks = weatherMarks(s.cond.levels);
+  if (marks) {
     const wx = document.createElement('span');
-    wx.className = 'bar__wx' + ((s.cond.fx.snow || 0) > (s.cond.fx.rain || 0) ? ' is-snow' : '');
-    wx.innerHTML = '<i></i>'.repeat(amount < 50 ? 1 : amount < 110 ? 2 : 3);
+    wx.className = 'bar__wx' + (marks.snow ? ' is-snow' : '');
+    wx.innerHTML = '<i></i>'.repeat(marks.count);
     bar.append(wx);
   }
   track.append(bar);

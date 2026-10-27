@@ -51,19 +51,30 @@ export function createScene(canvas, getAnchor) {
       x: rand(0, W), y: rand(0, H / 3),
       s: rand(1, 4) | 0,
       tinted: Math.random() < 0.5,
-      a: rand(0.1, 1),
+      a: rand(0.15, 1),
       phase: rand(0, Math.PI * 2),
+      speed: rand(0.5, 1.3), // each star breathes at its own pace
     }),
     clouds: () => {
       const a = getAnchor();
       return { y: rand(a.top, a.bottom), h: rand(1, 30), a: rand(0.01, 0.08), phase: rand(0, 10) };
     },
-    fog: () => ({
-      y: rand(H / 2, Math.max(H / 2 + 1, H - 300)),
-      h: rand(100, 450), a: rand(0.01, 0.07), phase: rand(0, 5),
-    }),
-    rain: () => ({ x: rand(-W * 0.3, W), y: rand(-H, H), len: rand(5, 11), v: rand(900, 1500) }),
-    snow: () => ({ x: rand(0, W), y: rand(-H, H), r: rand(0.5, 2.2), v: rand(35, 90), phase: rand(0, Math.PI * 2) }),
+    // thicker fog reaches higher and is denser
+    fog: () => {
+      const lvl = state.fx.fogLevel || 2;
+      const top = H * (0.62 - lvl * 0.1);
+      return { y: rand(top, Math.max(top + 1, H - 300)), h: rand(100, 450), a: rand(0.01, 0.07) * (0.6 + lvl * 0.25), phase: rand(0, 5) };
+    },
+    // heavier rain: longer, faster drops
+    rain: () => {
+      const k = 0.75 + (state.fx.rainLevel || 3) * 0.1;
+      return { x: rand(-W * 0.3, W), y: rand(-H, H), len: rand(5, 11) * k, v: rand(900, 1500) * k };
+    },
+    // heavier snow: bigger flakes
+    snow: () => {
+      const k = 0.8 + (state.fx.snowLevel || 3) * 0.1;
+      return { x: rand(0, W), y: rand(-H, H), r: rand(0.5, 2.2) * k, v: rand(35, 90), phase: rand(0, Math.PI * 2) };
+    },
     wind: () => ({ x: rand(-W, W), y: rand(0, H), len: rand(40, 130), v: rand(500, 1100), a: rand(0.06, 0.18) }),
   };
 
@@ -129,11 +140,10 @@ export function createScene(canvas, getAnchor) {
       for (const k in layers) age(layers[k], dt);
     }
 
-    // Stars - square, twinkling as a group like the original
-    const twinkle = still ? 1 : 0.75 + 0.25 * Math.sin(time * 1.3);
+    // Stars - square like the original, each softly pulsing
     for (const s of layers.stars) {
-      const flicker = still ? 1 : twinkle * (0.8 + 0.2 * Math.sin(time * 2 + s.phase));
-      const a = (s.tinted ? s.a * 0.5 : s.a) * s.life * flicker;
+      const pulse = still ? 1 : 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * s.speed + s.phase));
+      const a = (s.tinted ? s.a * 0.5 : s.a) * s.life * pulse;
       ctx.fillStyle = `rgba(${s.tinted ? state.tint : P},${a})`;
       ctx.fillRect(s.x, s.y, s.s, s.s);
     }
@@ -199,7 +209,7 @@ export function createScene(canvas, getAnchor) {
         flash = Math.max(flash, thunderCurve(((time - start) % cycle) / cycle));
       }
       if (flash) {
-        ctx.fillStyle = `rgba(${P},${flash * 0.55 * flashFade})`;
+        ctx.fillStyle = `rgba(${P},${flash * (fx.flash || 0.55) * flashFade})`;
         ctx.fillRect(0, 0, W, H);
       }
     }
@@ -225,10 +235,11 @@ export function createScene(canvas, getAnchor) {
     }
   }
 
+  let paused = false;
   function render() {
     cancelAnimationFrame(raf);
     raf = 0;
-    if (reduceMotion.matches || document.hidden) {
+    if (reduceMotion.matches || document.hidden || paused) {
       draw(0, 0);
     } else {
       last = 0;
@@ -242,6 +253,9 @@ export function createScene(canvas, getAnchor) {
   resize();
 
   return {
+    // stop animating (e.g. while scrolled off screen); the last frame stays
+    pause() { paused = true; render(); },
+    resume() { if (paused) { paused = false; render(); } },
     set(next) {
       state = next;
       update();

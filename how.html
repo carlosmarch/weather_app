@@ -29,8 +29,8 @@
 
     <section>
       <h2><span>01</span>The circle</h2>
-      <p>By day the circle is the sun, and at night it's a ring: the moon. The hotter it gets, the more the sun pulses and glows. Behind thick cloud or fog it dims and goes soft.</p>
-      <div class="tiles tiles--5" id="demo-circles"></div>
+      <p>By day the circle is the sun, and at night it's a ring: the moon. The hotter it gets, the more the sun pulses and glows. Behind thick cloud or fog it dims and goes soft. At night the stars pulse softly.</p>
+      <div class="steps" id="demo-circles"></div>
     </section>
 
     <section>
@@ -52,8 +52,17 @@
 
     <section>
       <h2><span>03</span>The weather</h2>
-      <p>The weather is drawn live on top of the sky: thin rain that slants in the wind, round snow, cloud bands across the circle, low fog, stars at night and thunder flashes.</p>
-      <div class="tiles tiles--3" id="demo-weather"></div>
+      <p>The weather is drawn live on top of the sky. Each kind has steps, set by the measured amount in the forecast: heavier rain falls faster and longer, heavier snow has bigger flakes, thicker fog rises higher, and stronger wind adds streaks and slants the rain.</p>
+      <h3>Rain <span>mm per hour</span></h3>
+      <div class="steps" id="demo-rain"></div>
+      <h3>Snow <span>cm per hour</span></h3>
+      <div class="steps" id="demo-snow"></div>
+      <h3>Fog <span>how far you can see</span></h3>
+      <div class="steps" id="demo-fog"></div>
+      <h3>Storm <span>thunder and lightning</span></h3>
+      <div class="steps" id="demo-storm"></div>
+      <h3>Wind <span>km per hour</span></h3>
+      <div class="steps" id="demo-wind"></div>
     </section>
 
     <section>
@@ -67,7 +76,7 @@
       <ul class="legend">
         <li><i class="lg lg--sky"></i><span><strong>Colour:</strong> each bar is a small copy of that hour's sky.</span></li>
         <li><i class="lg lg--height"></i><span><strong>Height:</strong> the temperature, from the day's low to its high.</span></li>
-        <li><i class="lg lg--rain"></i><span><strong>Ticks and dots:</strong> rain and snow, more marks for heavier.</span></li>
+        <li><i class="lg lg--rain"></i><span><strong>Marks:</strong> ticks for rain, stacked dots for snow, one to three by step.</span></li>
         <li><i class="lg lg--night"></i><span><strong>Moon to sun:</strong> the night, from sunset to sunrise.</span></li>
       </ul>
     </section>

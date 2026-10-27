@@ -56,11 +56,16 @@ export function desaturate(hex, sat) {
 }
 
 /* Sun intensity, from the original returnColorByCelsius side effects */
+export const SUN_STEPS = [
+  { min: 40, name: 'Scorching', pulses: 5, big: true, shining: true, blazing: true, duration: 2 },
+  { min: 30, name: 'Very hot', pulses: 4, big: true, shining: true, duration: 2.5 },
+  { min: 20, name: 'Hot', pulses: 2, big: true, shining: true, duration: 2.5 },
+  { min: 15, name: 'Warm', pulses: 1, big: false, shining: false, duration: 3 },
+  { min: -Infinity, name: 'Mild', pulses: 0, big: false, shining: false, duration: 3 },
+];
+
 export function sunIntensity(celsius) {
-  if (celsius >= 30) return { pulses: 3, big: true, shining: true };
-  if (celsius >= 20) return { pulses: 2, big: true, shining: true };
-  if (celsius >= 15) return { pulses: 1, big: false, shining: false };
-  return { pulses: 0, big: false, shining: false };
+  return SUN_STEPS.find(s => celsius >= s.min);
 }
 
 /* Stars, from the original returnColorByCurrentTime side effects */
