@@ -1,10 +1,13 @@
 /* Explore: places where the sky is extreme right now.
  * A fixed list of cities known for cold, heat, rain, snow, storms, fog and
- * wind, spread over both hemispheres so some are always in season. Their
- * current weather is fetched in one request and each theme ranks them live.
+ * wind, spread over both hemispheres so some are always in season, plus the
+ * world capitals so rain, snow and storms almost always turn up somewhere.
+ * Their current weather is fetched in a few requests and each theme ranks
+ * them live.
  * [name, region, countryCode, latitude, longitude]
  */
 import { getCondition } from './conditions.js';
+import { cities } from './cities.js';
 
 const PLACES = [
   // cold
@@ -59,6 +62,12 @@ const PLACES = [
   ['Darwin', 'Northern Territory, Australia', 'AU', -12.46, 130.84],
   ['Hilo', 'Hawaii, United States', 'US', 19.72, -155.08],
   ['Miami', 'Florida, United States', 'US', 25.76, -80.19],
+  ['Kolkata', 'West Bengal, India', 'IN', 22.57, 88.36],
+  ['Lagos', 'Nigeria', 'NG', 6.52, 3.38],
+  ['Bukavu', 'South Kivu, DR Congo', 'CD', -2.51, 28.86],
+  ['São Paulo', 'Brazil', 'BR', -23.55, -46.63],
+  ['Brisbane', 'Queensland, Australia', 'AU', -27.47, 153.03],
+  ['Tampa', 'Florida, United States', 'US', 27.95, -82.46],
   ['Bergen', 'Vestland, Norway', 'NO', 60.39, 5.32],
   ['Ketchikan', 'Alaska, United States', 'US', 55.34, -131.64],
   ['Milford Sound', 'Southland, New Zealand', 'NZ', -44.67, 167.93],
@@ -72,6 +81,16 @@ const PLACES = [
   ['Murmansk', 'Murmansk Oblast, Russia', 'RU', 68.97, 33.07],
   ['Zermatt', 'Valais, Switzerland', 'CH', 46.02, 7.75],
   ['Ushuaia', 'Tierra del Fuego, Argentina', 'AR', -54.8, -68.3],
+  ['Anchorage', 'Alaska, United States', 'US', 61.22, -149.9],
+  ['Whitehorse', 'Yukon, Canada', 'CA', 60.72, -135.06],
+  ['Kiruna', 'Lapland, Sweden', 'SE', 67.86, 20.23],
+  ['Arkhangelsk', 'Arkhangelsk Oblast, Russia', 'RU', 64.54, 40.54],
+  ['Vorkuta', 'Komi, Russia', 'RU', 67.5, 64.05],
+  ['Magadan', 'Magadan Oblast, Russia', 'RU', 59.57, 150.8],
+  ['Petropavlovsk-Kamchatsky', 'Kamchatka, Russia', 'RU', 53.02, 158.65],
+  ['Chamonix', 'Haute-Savoie, France', 'FR', 45.92, 6.87],
+  ['Leh', 'Ladakh, India', 'IN', 34.15, 77.58],
+  ['Lhasa', 'Tibet, China', 'CN', 29.65, 91.13],
   // fog
   ['San Francisco', 'California, United States', 'US', 37.77, -122.42],
   ['Lima', 'Peru', 'PE', -12.05, -77.04],
@@ -89,10 +108,17 @@ const PLACES = [
   ['Reykjavík', 'Iceland', 'IS', 64.15, -21.94],
 ].map(([name, region, code, lat, lon]) => ({ name, region, label: `${name}, ${code}`, lat, lon }));
 
+// capitals, minus those already on the list (within ~50 km)
+const near = (a, b) => Math.abs(a.lat - b.lat) < 0.5 && Math.abs(a.lon - b.lon) < 0.5;
+for (const [name, country, lat, lon, code] of cities) {
+  const place = { name, region: country, label: `${name}, ${code || country}`, lat, lon };
+  if (!PLACES.some(p => near(p, place))) PLACES.push(place);
+}
+
 /* Each theme keeps the places that match and orders them, most extreme first.
    score: a number (higher = more extreme) or null to leave the place out.
    Rain, snow, fog and storms use the same steps the scene draws, so a place
-   listed under "Pouring" really pours on screen. */
+   listed under "Rain" really rains on screen. */
 const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 export const THEMES = [
   { id: 'cold', name: 'Coldest', empty: '',
@@ -106,8 +132,8 @@ export const THEMES = [
       const e = Math.round(p.sun.elevation);
       return `${p.sun.rising ? 'Sunrise' : 'Sunset'} · sun ${Math.abs(e)}° ${e < 0 ? 'below' : 'up'}`;
     } },
-  { id: 'rain', name: 'Pouring', empty: 'No heavy rain on the list right now',
-    score: p => (p.levels.rain >= 2 && p.levels.rain >= p.levels.snow ? p.levels.rain * 100 + num(p.now.data.rain) : null),
+  { id: 'rain', name: 'Rain', empty: 'No rain on the list right now',
+    score: p => (p.levels.rain && p.levels.rain >= p.levels.snow ? p.levels.rain * 100 + num(p.now.data.rain) : null),
     detail: p => (p.now.data.rain > 0 ? `${p.now.data.rain.toFixed(1)} mm/h` : '') },
   { id: 'snow', name: 'Snowing', empty: 'Nowhere on the list is snowing right now',
     score: p => (p.levels.snow ? p.levels.snow * 100 + num(p.now.data.snow) : null),

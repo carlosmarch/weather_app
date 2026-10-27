@@ -65,9 +65,18 @@ export async function getForecast(lat, lon) {
   return { offset, hours };
 }
 
-/* Current weather for many places in one request (Explore).
-   Returns one { offset, now } per place, in the same order */
+/* Current weather for many places (Explore), in batches of 100 so URLs
+   stay short. Returns one { offset, now } per place, in the same order;
+   null for places whose batch failed */
 export async function getNowMany(places, signal) {
+  const batches = [];
+  for (let i = 0; i < places.length; i += 100) batches.push(getNowBatch(places.slice(i, i + 100), signal));
+  const results = await Promise.allSettled(batches);
+  if (results.every(r => r.status === 'rejected')) throw results[0].reason;
+  return results.flatMap((r, i) => (r.status === 'fulfilled' ? r.value : places.slice(i * 100, i * 100 + 100).map(() => null)));
+}
+
+async function getNowBatch(places, signal) {
   const params = new URLSearchParams({
     latitude: places.map(p => p.lat).join(','),
     longitude: places.map(p => p.lon).join(','),
