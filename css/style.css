@@ -148,8 +148,6 @@ button {
 .toolbar__left,
 .toolbar__right { display: flex; gap: 4px; }
 
-a.tool { color: inherit; text-decoration: none; }
-
 .tool {
   display: grid;
   place-items: center;
@@ -614,7 +612,11 @@ a.tool { color: inherit; text-decoration: none; }
   opacity: 0.85;
 }
 
+a.menu__item { color: inherit; text-decoration: none; }
+
 .menu__item[aria-checked="true"] svg { fill: currentColor; }
+
+.menu__item.is-busy svg { animation: spin 1s linear infinite; }
 
 .menu__item[disabled] { opacity: 0.4; cursor: default; }
 
