@@ -11,6 +11,7 @@ import { getCondition, weatherMarks, CODES } from './conditions.js';
 import { colorByCelsius, colorByHour, desaturate, sunIntensity, starsByHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
+import { renderPicture } from './picture.js';
 import { cities } from './cities.js';
 
 const REFRESH_MS = 15 * 60 * 1000;
@@ -35,6 +36,8 @@ const el = {
   night: $('#timeline-night'),
   high: $('#timeline-high'),
   retry: $('#retry'),
+  menu: $('#menu'),
+  menuBtn: $('#btn-menu'),
   search: $('#search'),
   searchForm: $('#search-form'),
   searchInput: $('#search-input'),
@@ -214,6 +217,9 @@ function render() {
 
   // Sun or moon
   makeDayOrNight(isDay, h.temp, cond.fx.veil);
+  const sun = isDay && !cond.fx.veil ? sunIntensity(h.temp) : {};
+  state.sky = { timeColor, tempColor, darken: cond.fx.darken || 0, inkDark: lum > 0.55, isDay,
+    veiled: !!cond.fx.veil, shining: !!sun.shining, blazing: !!sun.blazing, label: cond.label };
 
   // Environment particles
   const stars = isDay ? 0 : starsByHour(hour) || 40;
@@ -367,6 +373,8 @@ function buildTimeline() {
     bar.style.height = `${18 + ((h.temp - min) / range) * 82}%`;
     // each bar is that hour's sky: time colour at the bottom, temperature on top
     gradient(bar, 'to top', timeColor, tempColor);
+    bar.dataset.from = timeColor;
+    bar.dataset.to = tempColor;
 
     // precipitation marks: rain ticks / snow dots, more for heavier
     const marks = weatherMarks(cond.levels);
@@ -472,16 +480,13 @@ function bindUI() {
   $('#btn-locate').addEventListener('click', () => locate());
   $('#btn-random').addEventListener('click', () => (state.demo ? randomDemo() : loadRandomCity()));
   $('#btn-search').addEventListener('click', openSearch);
+  bindMenu();
   el.retry.addEventListener('click', () => {
     if (state.place) loadPlace({ ...state.place }, { share: false });
     else locate({ initial: true });
   });
 
-  el.temp.addEventListener('click', () => {
-    state.unit = state.unit === 'C' ? 'F' : 'C';
-    try { localStorage.setItem('tc-unit', state.unit); } catch {}
-    if (state.forecast) { render(); renderRange(); }
-  });
+  el.temp.addEventListener('click', () => setUnit(state.unit === 'C' ? 'F' : 'C'));
 
   // Timeline: tap or drag to scrub. While a finger is down (or a mouse
   // hovers) the timeline grows and the bars under the pointer swell
@@ -673,6 +678,132 @@ function renderSearch(list = null, empty = 'No cities found') {
 function pickPlace(place) {
   closeSearch();
   loadPlace({ lat: place.lat, lon: place.lon, label: place.label });
+}
+
+/* ======================================================================
+   OPTIONS MENU: save picture, share, pin, units
+   ====================================================================== */
+function bindMenu() {
+  el.menuBtn.addEventListener('click', () => (el.menu.hidden ? openMenu() : closeMenu()));
+  document.addEventListener('pointerdown', e => {
+    if (!el.menu.hidden && !el.menu.contains(e.target) && !el.menuBtn.contains(e.target)) closeMenu();
+  });
+  el.menu.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeMenu(); el.menuBtn.focus(); }
+  });
+  $('#menu-save').addEventListener('click', () => { closeMenu(); savePicture(); });
+  $('#menu-share').addEventListener('click', () => { closeMenu(); share(); });
+  $('#menu-pin').addEventListener('click', () => {
+    const place = currentPlace();
+    if (!place) return;
+    togglePin(place);
+    syncMenu();
+    toast(isPinned(place) ? `Pinned ${place.name}` : `Unpinned ${place.name}`);
+  });
+  el.menu.querySelectorAll('[data-unit]').forEach(b => b.addEventListener('click', () => setUnit(b.dataset.unit)));
+}
+
+function openMenu() {
+  syncMenu();
+  // draw the picture now: the share sheet must open right after the tap
+  state.picture = state.forecast ? pictureFile().catch(() => null) : null;
+  el.menu.hidden = false;
+  el.menuBtn.setAttribute('aria-expanded', 'true');
+  el.menu.querySelector('.menu__item').focus({ preventScroll: true });
+}
+
+function closeMenu() {
+  el.menu.hidden = true;
+  el.menuBtn.setAttribute('aria-expanded', 'false');
+}
+
+function syncMenu() {
+  const place = currentPlace();
+  const pinned = !!place && isPinned(place);
+  const pin = $('#menu-pin');
+  pin.disabled = !place;
+  pin.setAttribute('aria-checked', String(pinned));
+  $('#menu-pin-label').textContent = !place ? 'Pin this place' : pinned ? `Unpin ${place.name}` : `Pin ${place.name}`;
+  el.menu.querySelectorAll('[data-unit]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.unit === state.unit)));
+  const ready = !!state.forecast;
+  $('#menu-save').disabled = !ready;
+  $('#menu-share').disabled = !ready;
+}
+
+function setUnit(unit) {
+  state.unit = unit;
+  try { localStorage.setItem('tc-unit', unit); } catch {}
+  if (state.forecast) { render(); renderRange(); }
+  syncMenu();
+}
+
+/* The place on screen as a pin-able place (not in demo mode) */
+function currentPlace() {
+  if (!state.place || state.demo || !state.forecast) return null;
+  const [name, ...rest] = state.place.label.split(',');
+  return { name: name.trim(), region: rest.join(',').trim(), label: state.place.label, lat: state.place.lat, lon: state.place.lon };
+}
+
+function isPinned(place) {
+  return loadPins().some(p => samePlace(p, place));
+}
+
+function shareLink() {
+  const p = state.place;
+  const q = new URLSearchParams({ lat: p.lat.toFixed(3), lon: p.lon.toFixed(3), name: p.label || '' });
+  return `${location.origin}${location.pathname}?${q}`;
+}
+
+function shareText() {
+  const h = state.forecast.hours[state.selected];
+  const cond = state.sky?.label || '';
+  const when = h.isNow ? '' : ` at ${el.label.dataset.text?.split(' · ')[0] || ''}`;
+  return `${cond.charAt(0).toUpperCase() + cond.slice(1)}, ${toUnit(h.temp)}°${state.unit} in ${state.place.label}${when}`;
+}
+
+async function pictureFile() {
+  const blob = await renderPicture({ sky: state.sky, sceneCanvas: $('.scene'), root: el.app });
+  const city = (state.place?.label || 'timecast').split(',')[0].toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const local = new Date(Date.now() + (state.forecast?.offset || 0) * 1000);
+  const stamp = `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}-${pad(local.getUTCHours())}${pad(local.getUTCMinutes())}`;
+  return new File([blob], `timecast-${city}-${stamp}.png`, { type: 'image/png' });
+}
+
+async function savePicture() {
+  try {
+    const file = (await state.picture) || (await pictureFile());
+    // installed iOS app: no downloads, use the share sheet ("Save Image")
+    if (navigator.standalone && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file] });
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const a = Object.assign(document.createElement('a'), { href: url, download: file.name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast('Picture saved');
+  } catch (err) {
+    if (err.name !== 'AbortError') toast('Could not save the picture');
+  }
+}
+
+async function share() {
+  const data = { title: 'Timecast', text: shareText(), url: shareLink() };
+  try {
+    if (navigator.share) {
+      // with the picture where the platform supports sharing files
+      const file = await (state.picture || pictureFile().catch(() => null));
+      if (file && navigator.canShare?.({ ...data, files: [file] })) data.files = [file];
+      await navigator.share(data);
+      return;
+    }
+    await navigator.clipboard.writeText(`${data.text} ${data.url}`);
+    toast('Link copied');
+  } catch (err) {
+    if (err.name !== 'AbortError') toast('Could not share');
+  }
 }
 
 function openSearch() {
