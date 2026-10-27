@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>How Timecast works</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="How Timecast turns a forecast into a picture: the circle, the sky colours, the weather, the timeline.">
+  <meta name="theme-color" content="#1b1b1b">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/how.css">
+  <script type="module" src="js/how.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" id="back" href="./" aria-label="Back to Timecast">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </a>
+    <span class="topbar__title">Timecast</span>
+  </header>
+
+  <main>
+    <h1>How Timecast works</h1>
+    <p class="lead">The weather as a picture: one circle, one sky and a few words. Everything on screen is drawn from the forecast for that place and hour. There are no photos and no icons.</p>
+
+    <section>
+      <h2><span>01</span>The circle</h2>
+      <p>By day the circle is the sun, and at night it's a ring: the moon. The hotter it gets, the more the sun pulses and glows. Behind thick cloud or fog it dims and goes soft.</p>
+      <div class="tiles tiles--5" id="demo-circles"></div>
+    </section>
+
+    <section>
+      <h2><span>02</span>The sky</h2>
+      <p>The background mixes two colours in a diagonal gradient: one for the <strong>time of day</strong> where you are, one for the <strong>temperature</strong>.</p>
+      <div class="strip">
+        <div class="strip__label">Time of day</div>
+        <div class="strip__bar" id="strip-time"></div>
+        <div class="strip__ticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+      </div>
+      <div class="strip">
+        <div class="strip__label">Temperature</div>
+        <div class="strip__bar" id="strip-temp"></div>
+        <div class="strip__ticks"><span>−10°</span><span>0°</span><span>10°</span><span>20°</span><span>30°</span></div>
+      </div>
+      <p>Three things adjust it. At night the temperature colour sinks into the dark, so a mild night still looks like night. Clouds, fog, rain and snow take colour out of the sky. On very pale skies the text turns dark so it stays readable.</p>
+      <div class="tiles tiles--4" id="demo-skies"></div>
+    </section>
+
+    <section>
+      <h2><span>03</span>The weather</h2>
+      <p>The weather is drawn live on top of the sky: thin rain that slants in the wind, round snow, cloud bands across the circle, low fog, stars at night and thunder flashes.</p>
+      <div class="tiles tiles--3" id="demo-weather"></div>
+    </section>
+
+    <section>
+      <h2><span>04</span>The timeline</h2>
+      <p>The bars at the bottom are the next 24 hours. Drag across them (or hover on a computer) and the whole screen changes to that hour.</p>
+      <div class="timeline" id="demo-timeline">
+        <div class="timeline__label" id="demo-timeline-label">Now</div>
+        <div class="timeline__track" id="demo-timeline-track"></div>
+        <div class="timeline__night" id="demo-timeline-night"></div>
+      </div>
+      <ul class="legend">
+        <li><i class="lg lg--sky"></i><span><strong>Colour:</strong> each bar is a small copy of that hour's sky.</span></li>
+        <li><i class="lg lg--height"></i><span><strong>Height:</strong> the temperature, from the day's low to its high.</span></li>
+        <li><i class="lg lg--rain"></i><span><strong>Ticks and dots:</strong> rain and snow, more marks for heavier.</span></li>
+        <li><i class="lg lg--night"></i><span><strong>Moon to sun:</strong> the night, from sunset to sunrise.</span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span>05</span>Your places</h2>
+      <ul class="legend">
+        <li><i class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></i><span><strong>Search</strong> any city. <strong>Pin</strong> the ones you check often and they appear first.</span></li>
+        <li><i class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7"/></svg></i><span><strong>Your location:</strong> the weather where you are.</span></li>
+        <li><i class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h3.5c4.5 0 6.5 10 11 10H21M3 17h3.5c1.6 0 2.8-1.3 3.8-3M14 10c1-1.7 2.2-3 3.8-3H21M18.5 4.5L21 7l-2.5 2.5M18.5 14.5L21 17l-2.5 2.5"/></svg></i><span><strong>Random:</strong> a capital city somewhere in the world, to see another sky.</span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span>06</span>Data &amp; privacy</h2>
+      <p>Forecasts come from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>. City names come from BigDataCloud and Open-Meteo. Your location is only sent to them to get the forecast. Timecast has no server, no account and no tracking. Pinned places, your °C/°F choice and your last place are saved in this browser only.</p>
+    </section>
+
+    <section>
+      <h2><span>07</span>Tips</h2>
+      <ul class="legend">
+        <li><i class="ic ic--text">°</i><span>Tap the temperature to switch between °C and °F.</span></li>
+        <li><i class="ic ic--text">+</i><span>Add it to your home screen from your browser's share menu. It works offline with the last forecast.</span></li>
+        <li class="only-keys"><i class="ic ic--text">⌨</i><span><kbd>/</kbd> search · <kbd>R</kbd> random city · <kbd>←</kbd> <kbd>→</kbd> hours · <kbd>?</kbd> this page</span></li>
+      </ul>
+    </section>
+
+    <footer>
+      <a class="cta" href="./">Open Timecast</a>
+      <p>Timecast · made in 2016, rebuilt in 2026 · Carlos March</p>
+    </footer>
+  </main>
+</body>
+</html>

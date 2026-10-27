@@ -1,0 +1,70 @@
+/* ======================================================================
+   TIMECAST COLOUR TOKENS
+   Every colour in the app is defined here once. CSS uses them through
+   var(), and the sky engine (js/palette.js) reads the palette tokens, so
+   changing a value here changes it everywhere.
+   Palette tokens must stay 6-digit hex: the sky engine blends them.
+   ====================================================================== */
+:root {
+  /* ---- Sky palette: time of day (original 2016 colours) ---- */
+  --time-night:   #000000; /* ~03:00 */
+  --time-dawn:    #563761; /* ~07:30 */
+  --time-morning: #F5FFAE; /* ~10:30 */
+  --time-noon:    #FFB400; /* ~14:00 */
+  --time-dusk:    #56132A; /* ~17:30 */
+  --time-evening: #1F1F1F; /* ~21:30 */
+
+  /* ---- Sky palette: temperature (original 2016 colours) ---- */
+  --temp-freezing: #24303F; /* -10° */
+  --temp-too-cold: #393E46; /*   3° */
+  --temp-cold:     #48466D; /*   8° */
+  --temp-warm:     #F8A79B; /* 12.5° */
+  --temp-hot:      #FFD460; /* 17.5° */
+  --temp-very-hot: #EB586F; /*  25° */
+  --temp-damn-hot: #EA5455; /*  35° */
+
+  /* ---- Base ---- */
+  --white: #ffffff;
+  --black: #000000;
+  --bg: #1b1b1b;          /* page, loading screen, splash */
+  --bg-raised: #2f2f2f;   /* loading gradient */
+  --veil: #333333;        /* cloud veil over the sky */
+  --ink-light: #ffffff;
+  --ink-dark: #2a2a2a;    /* text on very pale skies */
+
+  /* ---- Sun, moon, particles ---- */
+  --sun: var(--white);
+  --sun-veiled: rgba(255, 255, 255, 0.78);
+  --sun-glow-inner: rgba(255, 255, 255, 0.65);
+  --sun-glow-outer: rgba(255, 255, 255, 0.22);
+  --sun-glow-end: rgba(255, 255, 255, 0);
+  --sun-edge: rgba(0, 0, 0, 0.05);          /* outline on pale skies */
+  --moon-fill: rgba(255, 255, 255, 0.2);
+  --particle: var(--white);                 /* rain, snow, clouds, fog */
+
+  /* ---- Text (light skies switch these, see style.css) ---- */
+  --ink: var(--ink-light);
+  --ink-soft: rgba(255, 255, 255, 0.7);
+  --ink-faint: rgba(255, 255, 255, 0.28);
+  --ink-dark-soft: rgba(42, 42, 42, 0.72);
+  --ink-dark-faint: rgba(42, 42, 42, 0.25);
+  --shadow-text: rgba(0, 0, 0, 0.18);
+
+  /* ---- Glass: inputs, buttons, rows on the blurred overlay ---- */
+  --glass: rgba(255, 255, 255, 0.12);
+  --glass-hover: rgba(255, 255, 255, 0.17);
+  --glass-row: rgba(255, 255, 255, 0.08);
+  --glass-stroke: rgba(255, 255, 255, 0.16);
+  --glass-stroke-strong: rgba(255, 255, 255, 0.45);
+  --on-glass: var(--white);
+  --on-glass-soft: rgba(255, 255, 255, 0.55);
+  --on-glass-placeholder: rgba(255, 255, 255, 0.45);
+
+  /* ---- Timeline bars ---- */
+  --bar-stroke: rgba(255, 255, 255, 0.22);
+  --bar-stroke-selected: rgba(255, 255, 255, 0.4);
+
+  /* ---- Overlays ---- */
+  --scrim: rgba(20, 20, 20, 0.55);   /* behind search */
+  --toast: rgba(0, 0, 0, 0.45);
+}

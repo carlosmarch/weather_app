@@ -204,7 +204,7 @@ function render() {
   const mid = mix(timeColor, tempColor);
   const lum = luminance(mid);
   el.root.dataset.ink = lum > 0.55 ? 'dark' : 'light';
-  el.root.style.setProperty('--text-shadow', lum > 0.3 && lum <= 0.55 ? '0 1px 14px rgba(0,0,0,.18)' : 'none');
+  el.root.style.setProperty('--text-shadow', lum > 0.3 && lum <= 0.55 ? '0 1px 14px var(--shadow-text)' : 'none');
   el.themeColor.content = timeColor;
 
   // Sun or moon
@@ -541,54 +541,129 @@ function bindUI() {
     if (e.target.closest('input, [role="slider"]')) return;
     if (e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) { e.preventDefault(); openSearch(); }
     else if (e.key === 'r') $('#btn-random').click();
+    else if (e.key === '?') location.href = 'how.html';
     else if (e.key === 'ArrowRight' && state.forecast) select(state.selected + 1);
     else if (e.key === 'ArrowLeft' && state.forecast) select(state.selected - 1);
   });
 
-  // Search
-  let timer = 0, controller = null, results = [];
+  // Search: suggestions and pinned places until something is typed
+  let timer = 0, controller = null, results = null;
   el.searchInput.addEventListener('input', () => {
     clearTimeout(timer);
     const q = el.searchInput.value.trim();
-    if (q.length < 2) { el.searchResults.textContent = ''; results = []; return; }
+    if (q.length < 2) { controller?.abort(); results = null; renderSearch(); return; }
     timer = setTimeout(async () => {
       controller?.abort();
       controller = new AbortController();
       try {
         results = await searchCity(q, controller.signal);
-        renderResults(results);
+        renderSearch(results);
       } catch (err) {
-        if (err.name !== 'AbortError') renderResults([], 'Search unavailable');
+        if (err.name !== 'AbortError') renderSearch([], 'Search unavailable');
       }
     }, 250);
   });
   el.searchForm.addEventListener('submit', e => {
     e.preventDefault();
-    if (results[0]) pickResult(results[0]);
+    if (results?.[0]) pickPlace(results[0]);
   });
   el.searchResults.addEventListener('click', e => {
-    const btn = e.target.closest('button[data-i]');
-    if (btn) pickResult(results[+btn.dataset.i]);
+    const go = e.target.closest('[data-go]');
+    const pin = e.target.closest('[data-pin]');
+    if (pin) {
+      const i = +pin.dataset.pin;
+      togglePin(searchRows[i]);
+      renderSearch(results);
+      // keep keyboard focus on the same place's pin
+      const same = [...el.searchResults.querySelectorAll('[data-pin]')]
+        .find(b => samePlace(searchRows[+b.dataset.pin], pin.place));
+      same?.focus({ preventScroll: true });
+    } else if (go) {
+      if (go.dataset.go === 'locate') { closeSearch(); locate(); }
+      else pickPlace(searchRows[+go.dataset.go]);
+    }
   });
   $('#search-close').addEventListener('click', closeSearch);
   el.search.addEventListener('click', e => { if (e.target === el.search) closeSearch(); });
+}
 
-  function renderResults(list, empty = 'No cities found') {
-    el.searchResults.innerHTML = list.length
-      ? list.map((r, i) => `<li><button type="button" data-i="${i}">${esc(r.name)}<small>${esc(r.region)}</small></button></li>`).join('')
-      : `<li class="search__empty">${empty}</li>`;
-  }
+/* ======================================================================
+   PLACES: suggestions and pins (pins are stored on this device only)
+   ====================================================================== */
+const SUGGESTED = [
+  { name: 'New York', region: 'New York, United States', label: 'New York, US', lat: 40.71, lon: -74.01 },
+  { name: 'London', region: 'England, United Kingdom', label: 'London, GB', lat: 51.51, lon: -0.13 },
+  { name: 'Tokyo', region: 'Japan', label: 'Tokyo, JP', lat: 35.68, lon: 139.69 },
+  { name: 'Sydney', region: 'New South Wales, Australia', label: 'Sydney, AU', lat: -33.87, lon: 151.21 },
+  { name: 'Reykjavík', region: 'Iceland', label: 'Reykjavík, IS', lat: 64.15, lon: -21.94 },
+  { name: 'Dubai', region: 'United Arab Emirates', label: 'Dubai, AE', lat: 25.2, lon: 55.27 },
+  { name: 'Mexico City', region: 'Mexico', label: 'Mexico City, MX', lat: 19.43, lon: -99.13 },
+  { name: 'Cape Town', region: 'Western Cape, South Africa', label: 'Cape Town, ZA', lat: -33.92, lon: 18.42 },
+];
 
-  function pickResult(r) {
-    closeSearch();
-    loadPlace({ lat: r.lat, lon: r.lon, label: r.label });
+const ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-1 6 3.5 3.5h-11L10 9.5z"/><path d="M12 13v7.5"/></svg>';
+const ICON_LOCATE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7"/></svg>';
+
+let searchRows = [];
+
+function placeKey(p) {
+  return `${(+p.lat).toFixed(2)},${(+p.lon).toFixed(2)}`;
+}
+
+function samePlace(a, b) {
+  return !!a && !!b && placeKey(a) === placeKey(b);
+}
+
+function loadPins() {
+  try { return JSON.parse(localStorage.getItem('tc-pins')) || []; } catch { return []; }
+}
+
+function togglePin(place) {
+  const pins = loadPins();
+  const i = pins.findIndex(p => samePlace(p, place));
+  if (i >= 0) pins.splice(i, 1);
+  else pins.push({ name: place.name, region: place.region, label: place.label, lat: place.lat, lon: place.lon });
+  try { localStorage.setItem('tc-pins', JSON.stringify(pins)); } catch {}
+}
+
+/* list = null: location, pinned and suggested places; otherwise search results */
+function renderSearch(list = null, empty = 'No cities found') {
+  const pins = loadPins();
+  const rows = [];
+  const heading = text => `<li class="search__heading" role="presentation">${text}</li>`;
+  const row = place => {
+    const i = rows.push(place) - 1;
+    const pinned = pins.some(p => samePlace(p, place));
+    return `<li class="place">
+      <button type="button" class="place__go" data-go="${i}"><span>${esc(place.name)}<small>${esc(place.region || '')}</small></span></button>
+      <button type="button" class="place__pin" data-pin="${i}" aria-pressed="${pinned}" aria-label="${pinned ? 'Unpin' : 'Pin'} ${esc(place.name)}" title="${pinned ? 'Unpin' : 'Pin'}">${ICON_PIN}</button>
+    </li>`;
+  };
+
+  let html = '';
+  if (list === null) {
+    html += `<li class="place"><button type="button" class="place__go" data-go="locate">${ICON_LOCATE}<span>Use my location</span></button></li>`;
+    if (pins.length) html += heading('Pinned') + pins.map(row).join('');
+    const suggested = SUGGESTED.filter(p => !pins.some(q => samePlace(p, q)));
+    if (suggested.length) html += heading('Suggestions') + suggested.map(row).join('');
+  } else {
+    html = list.length ? list.map(row).join('') : `<li class="search__empty">${empty}</li>`;
   }
+  searchRows = rows;
+  el.searchResults.innerHTML = html;
+  // remember which place each pin button belongs to (for focus after re-render)
+  el.searchResults.querySelectorAll('[data-pin]').forEach(b => { b.place = rows[+b.dataset.pin]; });
+}
+
+function pickPlace(place) {
+  closeSearch();
+  loadPlace({ lat: place.lat, lon: place.lon, label: place.label });
 }
 
 function openSearch() {
   el.search.hidden = false;
   el.searchInput.value = '';
-  el.searchResults.textContent = '';
+  renderSearch();
   requestAnimationFrame(() => el.searchInput.focus());
 }
 

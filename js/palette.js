@@ -4,36 +4,49 @@
  * (purple -> yellow passes through pink, not olive).
  */
 
-// [celsius, colour] - midpoints of the original temperature buckets
+// [celsius, colour token] - midpoints of the original temperature buckets
 const TEMP_STOPS = [
-  [-10, '#24303F'], // freezing (new)
-  [3,   '#393E46'], // too cold
-  [8,   '#48466D'], // cold
-  [12.5,'#F8A79B'], // warm
-  [17.5,'#FFD460'], // hot
-  [25,  '#EB586F'], // very hot
-  [35,  '#EA5455'], // damn hot
+  [-10,  '--temp-freezing'],
+  [3,    '--temp-too-cold'],
+  [8,    '--temp-cold'],
+  [12.5, '--temp-warm'],
+  [17.5, '--temp-hot'],
+  [25,   '--temp-very-hot'],
+  [35,   '--temp-damn-hot'],
 ];
 
-// [hour, colour] - midpoints of the original time-of-day buckets (cyclic)
+// [hour, colour token] - midpoints of the original time-of-day buckets (cyclic)
 const TIME_STOPS = [
-  [3,    '#000000'],
-  [7.5,  '#563761'],
-  [10.5, '#F5FFAE'],
-  [14,   '#FFB400'],
-  [17.5, '#56132A'],
-  [21.5, '#1F1F1F'],
-  [27,   '#000000'], // = 3h next day
+  [3,    '--time-night'],
+  [7.5,  '--time-dawn'],
+  [10.5, '--time-morning'],
+  [14,   '--time-noon'],
+  [17.5, '--time-dusk'],
+  [21.5, '--time-evening'],
+  [27,   '--time-night'], // = 3h next day
 ];
+
+/* Colour tokens live in css/tokens.css; read them once */
+const cache = {};
+export function token(name) {
+  if (!(name in cache)) {
+    cache[name] = getComputedStyle(document.documentElement).getPropertyValue(name).trim().toLowerCase();
+  }
+  return cache[name];
+}
+
+const resolve = stops => stops.map(([v, name]) => [v, token(name)]);
 
 export function colorByCelsius(celsius) {
-  return interpolate(TEMP_STOPS, celsius);
+  return interpolate(resolve(TEMP_STOPS), celsius);
 }
 
 export function colorByHour(hour) {
   const h = hour < 3 ? hour + 24 : hour;
-  return interpolate(TIME_STOPS, h);
+  return interpolate(resolve(TIME_STOPS), h);
 }
+
+export { TEMP_STOPS, TIME_STOPS };
 
 /* Bad weather drains colour from the sky: sat 1 = untouched, 0 = grey */
 export function desaturate(hex, sat) {

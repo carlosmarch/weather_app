@@ -3,10 +3,8 @@
    Same idea as 2016: one circle, a gradient and a few words.
    ====================================================================== */
 
+/* Colours come from tokens.css; this file only refers to them */
 :root {
-  --ink: #ffffff;
-  --ink-soft: rgba(255, 255, 255, 0.7);
-  --ink-faint: rgba(255, 255, 255, 0.28);
   --text-shadow: none;
   --icon: clamp(84px, 24vw, 104px);
   --gutter: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
@@ -16,9 +14,9 @@
 
 /* Very light skies (late morning, pale yellow) switch to dark ink */
 :root[data-ink="dark"] {
-  --ink: #2a2a2a;
-  --ink-soft: rgba(42, 42, 42, 0.72);
-  --ink-faint: rgba(42, 42, 42, 0.25);
+  --ink: var(--ink-dark);
+  --ink-soft: var(--ink-dark-soft);
+  --ink-faint: var(--ink-dark-faint);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -31,7 +29,7 @@ html, body {
 /* JS tints this to the bottom of the sky, so any area iOS leaves without
    content blends in instead of showing a grey band */
 html {
-  background: #1b1b1b;
+  background: var(--bg);
   transition: background-color 2s ease;
 }
 
@@ -92,7 +90,7 @@ button {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(-65deg, #2f2f2f, #1b1b1b);
+  background: linear-gradient(-65deg, var(--bg-raised), var(--bg));
 }
 
 .sky__layer,
@@ -105,7 +103,7 @@ button {
 
 .sky__layer.is-active { opacity: 1; }
 
-.sky__darken { background: #333; }
+.sky__darken { background: var(--veil); }
 
 .scene {
   position: absolute;
@@ -133,7 +131,10 @@ button {
   padding: max(14px, env(safe-area-inset-top)) var(--gutter) 0;
 }
 
+.toolbar__left,
 .toolbar__right { display: flex; gap: 4px; }
+
+a.tool { color: inherit; text-decoration: none; }
 
 .tool {
   display: grid;
@@ -303,7 +304,7 @@ button {
 .retry:hover { background: var(--ink-faint); }
 
 .sun {
-  background: #fff;
+  background: var(--sun);
   animation: popIn 1.2s var(--ease) both;
 }
 
@@ -315,29 +316,29 @@ button {
   inset: -110%;
   border-radius: 50%;
   background: radial-gradient(closest-side,
-    rgba(255, 255, 255, 0.65) 30%,
-    rgba(255, 255, 255, 0.22) 55%,
-    rgba(255, 255, 255, 0) 100%);
+    var(--sun-glow-inner) 30%,
+    var(--sun-glow-outer) 55%,
+    var(--sun-glow-end) 100%);
   pointer-events: none;
 }
 
 /* Behind clouds or fog: dimmer, soft edged, no glow */
 .sun.is-veiled {
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--sun-veiled);
   filter: blur(1.5px);
 }
 
-:root[data-ink="dark"] .sun { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05); }
+:root[data-ink="dark"] .sun { box-shadow: 0 0 0 1px var(--sun-edge); }
 
 .moon {
-  box-shadow: inset 0 0 0 6px #fff;
-  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 6px var(--sun);
+  background: var(--moon-fill);
   animation: popIn 1.2s var(--ease) both, opacityMoon 3s ease-out 1.2s infinite;
 }
 
 .sun-pulse,
 .sun-pulse2x {
-  background: #fff;
+  background: var(--sun);
   animation: pulseAnim 3s ease-out infinite;
 }
 
@@ -399,7 +400,7 @@ button {
   flex: var(--w, 1) 1 0;
   min-height: 4px;
   border-radius: 2px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 0 0 1px var(--bar-stroke);
   transform: scaleY(calc(var(--mag, 1) * var(--sel, 1)));
   transition: transform 0.18s var(--ease), flex-grow 0.18s var(--ease), box-shadow 0.25s ease;
   transform-origin: bottom;
@@ -407,7 +408,7 @@ button {
 
 .bar.is-selected {
   --sel: 1.1;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 0 1.5px var(--ink);
+  box-shadow: inset 0 0 0 1px var(--bar-stroke-selected), 0 0 0 1.5px var(--ink);
 }
 
 /* Growing while scrubbing (touch) or hovering (mouse) */
@@ -514,10 +515,10 @@ button {
   flex-direction: column;
   align-items: center;
   padding: max(14px, env(safe-area-inset-top)) var(--gutter) 24px;
-  background: rgba(20, 20, 20, 0.55);
+  background: var(--scrim);
   backdrop-filter: blur(18px) saturate(1.2);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  color: #fff;
+  color: var(--on-glass);
   text-shadow: none;
   animation: fadeIn 0.25s ease both;
 }
@@ -544,15 +545,15 @@ button {
   height: 48px;
   padding: 0 18px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke);
   cursor: text;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search__field:focus-within {
-  background: rgba(255, 255, 255, 0.17);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  background: var(--glass-hover);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke-strong);
 }
 
 .search__field svg {
@@ -574,7 +575,7 @@ button {
   background: none;
   border: 0;
   outline: 0;
-  color: #fff;
+  color: var(--on-glass);
   font: inherit;
   font-size: 16px; /* >=16px avoids iOS zoom */
   font-weight: 500;
@@ -585,7 +586,7 @@ button {
   appearance: none;
 }
 
-.search__input::placeholder { color: rgba(255, 255, 255, 0.45); }
+.search__input::placeholder { color: var(--on-glass-placeholder); }
 .search__input::-webkit-search-cancel-button,
 .search__input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
 
@@ -593,23 +594,23 @@ button {
 .search__close {
   height: 48px;
   border-radius: 24px; /* pill field, round X */
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke);
 }
 
 /* Same box as the input, square */
 .search__close {
   flex: none;
   width: 48px;
-  color: #fff;
+  color: var(--on-glass);
   opacity: 1;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search__close:hover,
 .search__close:focus-visible {
-  background: rgba(255, 255, 255, 0.17);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  background: var(--glass-hover);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke-strong);
 }
 
 .search__close svg { width: 18px; height: 18px; stroke-width: 1.8; opacity: 0.8; }
@@ -623,36 +624,102 @@ button {
   overflow-y: auto;
 }
 
-.search__results button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 14px 18px;
+.search__heading {
+  margin: 18px 18px 6px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--on-glass-soft);
+}
+
+.search__heading:first-child { margin-top: 8px; }
+
+/* A place: name + region, with a pin toggle on the right */
+.place {
+  display: flex;
+  align-items: center;
   border-radius: 24px;
+  transition: background-color 0.2s ease;
+}
+
+.place:hover,
+.place:focus-within { background: var(--glass-row); }
+
+.place__go {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 13px 4px 13px 18px;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.17em;
   text-transform: uppercase;
 }
 
-.search__results button:hover,
-.search__results button:focus-visible { background: rgba(255, 255, 255, 0.08); }
+.place__go:focus-visible { outline: none; }
 
-.search__results small {
+.place__go > span { min-width: 0; }
+
+.place__go svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.place small {
   display: block;
   margin-top: 4px;
   font-size: 10px;
   font-weight: 400;
   letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--on-glass-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+.place__pin {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: 4px;
+  border-radius: 50%;
+  color: var(--on-glass);
+  opacity: 0.45;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.place__pin:hover { opacity: 0.9; background: var(--glass); }
+.place__pin[aria-pressed="true"] { opacity: 1; }
+
+.place__pin svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.place__pin[aria-pressed="true"] svg { fill: currentColor; }
+
 .search__empty {
-  padding: 14px 16px;
+  padding: 14px 18px;
   font-size: 11px;
   letter-spacing: 0.17em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--on-glass-soft);
 }
 
 /* ======================================================================
@@ -667,10 +734,10 @@ button {
   max-width: calc(100% - 32px);
   padding: 9px 16px;
   border-radius: 20px;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--toast);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #fff;
+  color: var(--white);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.15em;

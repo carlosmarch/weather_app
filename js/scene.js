@@ -9,9 +9,10 @@
  * so scrubbing through the forecast morphs from hour to hour.
  */
 
-import { hexToRgb, mix } from './palette.js';
+import { hexToRgb, mix, token } from './palette.js';
 
 const REF_AREA = 1440 * 900;
+let P = '255,255,255'; // particle colour (rgb), from the --particle token
 const FADE_S = 0.8;
 
 export function createScene(canvas, getAnchor) {
@@ -80,7 +81,8 @@ export function createScene(canvas, getAnchor) {
     for (const k in layers) layers[k] = reconcile(layers[k], want[k], makers[k], life);
 
     // tinted stars: lifted toward white, or they vanish into a black sky
-    state.tint = hexToRgb(mix(state.timeColor, '#ffffff', 0.65)).join(',');
+    state.tint = hexToRgb(mix(state.timeColor, token('--white'), 0.65)).join(',');
+    P = hexToRgb(token('--particle')).join(',');
     // [cycle s, delay s] from the original thunder keyframes, timed from now
     const now = performance.now() / 1000;
     thunder = [[3, 0], [10.5, 8.5], [6.2, 20.2], [7.4, 4.1]]
@@ -132,21 +134,21 @@ export function createScene(canvas, getAnchor) {
     for (const s of layers.stars) {
       const flicker = still ? 1 : twinkle * (0.8 + 0.2 * Math.sin(time * 2 + s.phase));
       const a = (s.tinted ? s.a * 0.5 : s.a) * s.life * flicker;
-      ctx.fillStyle = `rgba(${s.tinted ? state.tint : '255,255,255'},${a})`;
+      ctx.fillStyle = `rgba(${s.tinted ? state.tint : P},${a})`;
       ctx.fillRect(s.x, s.y, s.s, s.s);
     }
 
     // Cloud bands crossing the sun / moon
     for (const c of layers.clouds) {
       const bob = still ? 0 : Math.sin((time + c.phase) * (Math.PI / 5)) * 3;
-      ctx.fillStyle = `rgba(255,255,255,${c.a * c.life})`;
+      ctx.fillStyle = `rgba(${P},${c.a * c.life})`;
       ctx.fillRect(0, c.y + bob, W, c.h);
     }
 
     // Fog bands
     for (const f of layers.fog) {
       const bob = still ? 0 : Math.sin((time + f.phase) * (Math.PI / 2.5)) * 4;
-      ctx.fillStyle = `rgba(255,255,255,${f.a * f.life})`;
+      ctx.fillStyle = `rgba(${P},${f.a * f.life})`;
       ctx.fillRect(0, f.y + bob, W, f.h);
     }
 
@@ -157,9 +159,9 @@ export function createScene(canvas, getAnchor) {
         if (w.x > W) { w.x = -w.len - rand(0, W / 2); w.y = rand(0, H); }
       }
       const g = ctx.createLinearGradient(w.x, 0, w.x + w.len, 0);
-      g.addColorStop(0, 'rgba(255,255,255,0)');
-      g.addColorStop(0.6, `rgba(255,255,255,${w.a * w.life})`);
-      g.addColorStop(1, 'rgba(255,255,255,0)');
+      g.addColorStop(0, `rgba(${P},0)`);
+      g.addColorStop(0.6, `rgba(${P},${w.a * w.life})`);
+      g.addColorStop(1, `rgba(${P},0)`);
       ctx.fillStyle = g;
       ctx.fillRect(w.x, w.y, w.len, 1);
     }
@@ -197,7 +199,7 @@ export function createScene(canvas, getAnchor) {
         flash = Math.max(flash, thunderCurve(((time - start) % cycle) / cycle));
       }
       if (flash) {
-        ctx.fillStyle = `rgba(255,255,255,${flash * 0.55 * flashFade})`;
+        ctx.fillStyle = `rgba(${P},${flash * 0.55 * flashFade})`;
         ctx.fillRect(0, 0, W, H);
       }
     }
@@ -207,8 +209,8 @@ export function createScene(canvas, getAnchor) {
      life in one path, fading particles on their own */
   function batch(list, alpha, mode, trace) {
     const setStyle = a => {
-      if (mode === 'fill') ctx.fillStyle = `rgba(255,255,255,${a})`;
-      else ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      if (mode === 'fill') ctx.fillStyle = `rgba(${P},${a})`;
+      else ctx.strokeStyle = `rgba(${P},${a})`;
     };
     setStyle(alpha);
     ctx.beginPath();
