@@ -81,11 +81,8 @@ function init() {
   registerServiceWorker();
 
   const params = new URLSearchParams(location.search);
-  // ?wallpaper: only the sky and the circle, for desktop wallpaper apps;
-  // ?wallpaper=info: the clean view, kept on
-  state.wallpaper = params.get('wallpaper');
-  document.body.classList.toggle('is-wallpaper', state.wallpaper === '');
-  if (state.wallpaper === 'info') toggleClean(true);
+  const wallpaper = params.get('wallpaper');
+  if (wallpaper !== null) setWallpaper(wallpaper === 'info' ? 'info' : '');
   if (params.has('demo')) return startDemo(params);
 
   const lat = parseFloat(params.get('lat'));
@@ -771,7 +768,7 @@ function renderSearch(list = null, empty = 'No cities found') {
 function pickPlace(place) {
   closeSearch();
   if (place.demo) {
-    history.replaceState(null, '', `?demo&${place.demo}`);
+    writeURL(new URLSearchParams(`demo&${place.demo}`));
     return startDemo(new URLSearchParams(place.demo));
   }
   loadPlace({ lat: place.lat, lon: place.lon, label: place.label });
@@ -792,6 +789,7 @@ function bindMenu() {
   $('#menu-save').addEventListener('click', () => { closeMenu(); savePicture(); });
   $('#menu-scene').addEventListener('click', () => { closeMenu(); saveScene(); });
   $('#menu-share').addEventListener('click', () => { closeMenu(); share(); });
+  $('#menu-wallpaper').addEventListener('click', () => setWallpaper(''));
   $('#menu-pin').addEventListener('click', () => {
     const place = currentPlace();
     if (!place) return;
@@ -802,11 +800,21 @@ function bindMenu() {
   el.menu.querySelectorAll('[data-unit]').forEach(b => b.addEventListener('click', () => setUnit(b.dataset.unit)));
 }
 
-/* Clean view: only the sky, the circle, the words and the bars */
-function toggleClean(on = !document.body.classList.contains('is-clean')) {
-  if (state.wallpaper === 'info') on = true;
-  document.body.classList.toggle('is-clean', on);
-  if (on) closeMenu();
+/* Clean view (?wallpaper=info): only the sky, the circle, the words and
+   the bars. A tap turns it on or off, and leaves the sky-only view */
+function toggleClean() {
+  setWallpaper(state.wallpaper === null ? 'info' : null);
+}
+
+/* null: everything · 'info': clean view · '': only the sky and the circle,
+   for desktop wallpaper apps. Kept in the URL so the view can be shared */
+function setWallpaper(mode) {
+  state.wallpaper = mode;
+  document.body.classList.toggle('is-clean', mode !== null);
+  document.body.classList.toggle('is-wallpaper', mode === '');
+  if (mode !== null) closeMenu();
+  else clearTimeout(state.retryTimer);
+  writeURL(new URLSearchParams(location.search));
 }
 
 function openMenu() {
@@ -1028,13 +1036,20 @@ function buildDemo({ code, temp, hour, wind, data = {}, day, saved = false, labe
    UTILS
    ====================================================================== */
 function shareURL(place) {
-  const p = new URLSearchParams({ lat: place.lat.toFixed(3), lon: place.lon.toFixed(3), name: place.label || '' });
-  if (state.wallpaper !== null) p.set('wallpaper', state.wallpaper);
-  history.replaceState(null, '', `?${p}`);
+  writeURL(new URLSearchParams({ lat: place.lat.toFixed(3), lon: place.lon.toFixed(3), name: place.label || '' }));
 }
 
 function clearShare() {
-  if (location.search) history.replaceState(null, '', state.wallpaper !== null ? `?${new URLSearchParams({ wallpaper: state.wallpaper })}` : location.pathname);
+  writeURL(new URLSearchParams());
+}
+
+// Replace the query with these params plus the wallpaper view; flags like
+// demo and wallpaper stay bare (?demo&wallpaper, not ?demo=&wallpaper=)
+function writeURL(params) {
+  params.delete('wallpaper');
+  if (state.wallpaper !== null) params.set('wallpaper', state.wallpaper);
+  const q = [...params].map(([k, v]) => (v ? `${k}=${encodeURIComponent(v)}` : k)).join('&');
+  history.replaceState(null, '', q ? `?${q}` : location.pathname);
 }
 
 function savePlace(place) {
