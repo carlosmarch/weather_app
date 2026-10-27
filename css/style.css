@@ -335,6 +335,42 @@ button {
   animation: pulseAnim 2.5s ease-out infinite;
 }
 
+/* ?loader=icon - the app icon (icons/icon.svg): its sun breathing,
+   its two cloud bands drifting */
+.loader--icon {
+  border-radius: 22%;
+  overflow: hidden;
+  box-shadow: none;
+  background: linear-gradient(to bottom left, var(--time-noon), var(--temp-very-hot));
+  animation: popIn 1.2s var(--ease) both;
+}
+
+.loader--icon::after { display: none; }
+
+.loader--icon b {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  background: var(--white);
+  animation: lwBob 3s ease-in-out infinite alternate;
+}
+
+.loader--icon b:nth-child(1) { top: 46.1%; height: 2%;   opacity: 0.18; }
+.loader--icon b:nth-child(2) { top: 52.7%; height: 4.3%; opacity: 0.12; animation-delay: -1.5s; }
+
+.loader--icon i {
+  position: absolute;
+  inset: 31.25%;
+  border-radius: 50%;
+  background: var(--white);
+  animation: iconSun 2.4s ease-in-out infinite;
+}
+
+@keyframes iconSun {
+  0%, 100% { transform: scale(0.85); }
+  50%      { transform: scale(1.1); }
+}
+
 /* ?loader=sky - the weather it may find, one after another */
 .loader--sky {
   overflow: hidden;

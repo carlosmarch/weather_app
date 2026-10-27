@@ -85,7 +85,7 @@ function init() {
   state.wallpaper = params.get('wallpaper');
   document.body.classList.toggle('is-wallpaper', state.wallpaper === '');
   if (state.wallpaper === 'info') toggleClean(true);
-  if (['ring', 'hue', 'sky'].includes(params.get('loader'))) {
+  if (['ring', 'hue', 'sky', 'icon'].includes(params.get('loader'))) {
     state.loader = params.get('loader');
     el.icon.innerHTML = loaderMarkup(state.loader);
   }
@@ -357,8 +357,10 @@ function setLoading(on) {
    ring: a thin ring with the original pulse inside
    hue:  the palette slowly turning inside the ring, mixing a sky
    sky:  the ring cycling through the weather it may find: sun, clouds,
-         rain, snow, moon */
+         rain, snow, moon
+   icon: the app icon, its sun breathing and its cloud bands drifting */
 function loaderMarkup(kind) {
+  if (kind === 'icon') return '<div class="loader loader--icon"><b></b><b></b><i></i></div>';
   if (kind === 'hue') return '<div class="loader loader--hue"><i></i></div>';
   if (kind === 'sky') {
     const rain = [10, 22, 34, 46, 58, 70, 82, 94, 16, 40, 64, 88]
