@@ -671,7 +671,7 @@ function renderSearch(list = null, empty = 'No cities found') {
     html += `<li class="place"><button type="button" class="place__go" data-go="locate">${ICON_LOCATE}<span>Use my location</span></button></li>`;
     const pinnedPlaces = pins.filter(p => !p.demo), scenes = pins.filter(p => p.demo);
     if (pinnedPlaces.length) html += heading('Pinned') + pinnedPlaces.map(row).join('');
-    if (scenes.length) html += heading('Saved pictures') + scenes.map(row).join('');
+    if (scenes.length) html += heading('Saved scenes') + scenes.map(row).join('');
     const suggested = SUGGESTED.filter(p => !pins.some(q => samePlace(p, q)));
     if (suggested.length) html += heading('Suggestions') + suggested.map(row).join('');
   } else {
@@ -703,7 +703,8 @@ function bindMenu() {
   el.menu.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeMenu(); el.menuBtn.focus(); }
   });
-  $('#menu-save').addEventListener('click', () => { closeMenu(); saveScene(); });
+  $('#menu-save').addEventListener('click', () => { closeMenu(); savePicture(); });
+  $('#menu-scene').addEventListener('click', () => { closeMenu(); saveScene(); });
   $('#menu-share').addEventListener('click', () => { closeMenu(); share(); });
   $('#menu-pin').addEventListener('click', () => {
     const place = currentPlace();
@@ -739,6 +740,7 @@ function syncMenu() {
   el.menu.querySelectorAll('[data-unit]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.unit === state.unit)));
   const ready = !!state.forecast;
   $('#menu-save').disabled = !ready;
+  $('#menu-scene').disabled = !ready;
   $('#menu-share').disabled = !ready;
 }
 
@@ -781,7 +783,28 @@ async function pictureFile() {
   return new File([blob], `timecast-${city}-${stamp}.png`, { type: 'image/png' });
 }
 
-/* Save picture: keep this scene (place, weather, hour, amounts) as a
+/* Save as picture: a PNG of the screen. Downloads it; in the installed
+   iOS app (no downloads) it opens the share sheet ("Save Image") */
+async function savePicture() {
+  try {
+    const file = (await state.picture) || (await pictureFile());
+    if (navigator.standalone && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file] });
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const a = Object.assign(document.createElement('a'), { href: url, download: file.name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast('Picture saved');
+  } catch (err) {
+    if (err.name !== 'AbortError') toast('Could not save the picture');
+  }
+}
+
+/* Save as scene: keep this scene (place, weather, hour, amounts) as a
    demo that can be reopened from the pins in search */
 function saveScene() {
   const h = state.forecast.hours[state.selected];
@@ -806,7 +829,7 @@ function saveScene() {
   };
   if (isPinned(scene)) return toast('Already saved');
   togglePin(scene);
-  toast('Picture saved · find it in search');
+  toast('Scene saved · find it in search');
 }
 
 async function share() {
