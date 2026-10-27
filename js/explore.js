@@ -99,6 +99,13 @@ export const THEMES = [
     score: p => -p.now.temp },
   { id: 'hot', name: 'Hottest', empty: '',
     score: p => p.now.temp },
+  { id: 'golden', name: 'Golden hour', empty: 'No city on the list is at golden hour right now',
+    // sun from 4° below to 6° above the horizon, best around 1° up
+    score: p => (p.sun.elevation >= -4 && p.sun.elevation <= 6 ? -Math.abs(p.sun.elevation - 1) : null),
+    detail: p => {
+      const e = Math.round(p.sun.elevation);
+      return `${p.sun.rising ? 'Sunrise' : 'Sunset'} · sun ${Math.abs(e)}° ${e < 0 ? 'below' : 'up'}`;
+    } },
   { id: 'rain', name: 'Pouring', empty: 'No heavy rain on the list right now',
     score: p => (p.levels.rain >= 2 && p.levels.rain >= p.levels.snow ? p.levels.rain * 100 + num(p.now.data.rain) : null),
     detail: p => (p.now.data.rain > 0 ? `${p.now.data.rain.toFixed(1)} mm/h` : '') },
@@ -125,11 +132,29 @@ export function rank(themeId, now, count = 6) {
       if (!now[i]) return null;
       const n = now[i].now;
       const { label, levels } = getCondition(n.code, n.wind, n.data);
-      const p = { ...place, now: n, offset: now[i].offset, condition: label, levels };
+      const sun = sunAt(place.lat, place.lon, n.time ? n.time * 1000 : Date.now());
+      const p = { ...place, now: n, offset: now[i].offset, condition: label, levels, sun };
       const score = theme.score(p);
       return score === null || !Number.isFinite(score) ? null : { ...p, score, detail: theme.detail?.(p) || '' };
     })
     .filter(Boolean)
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
+}
+
+/* Sun height above the horizon (degrees) and whether it's rising,
+   from the usual low-precision solar position formulas (~0.5° accuracy) */
+export function sunAt(lat, lon, ms) {
+  const rad = Math.PI / 180;
+  const d = (ms - 946728000000) / 86400000; // days since J2000 (2000-01-01 12:00 UTC)
+  const g = (357.529 + 0.98560028 * d) * rad;            // mean anomaly
+  const q = 280.459 + 0.98564736 * d;                    // mean longitude
+  const L = (q + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * rad; // ecliptic longitude
+  const e = (23.439 - 0.00000036 * d) * rad;             // axial tilt
+  const ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)) / rad;
+  const dec = Math.asin(Math.sin(e) * Math.sin(L));
+  const gmst = 18.697374558 + 24.06570982441908 * d;     // sidereal time, hours
+  const ha = (gmst * 15 + lon - ra) * rad;               // local hour angle
+  const elevation = Math.asin(Math.sin(lat * rad) * Math.sin(dec) + Math.cos(lat * rad) * Math.cos(dec) * Math.cos(ha)) / rad;
+  return { elevation, rising: Math.sin(ha) < 0 }; // before local noon the hour angle is negative
 }
