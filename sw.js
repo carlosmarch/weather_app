@@ -4,7 +4,7 @@
  * Fonts: cache first, refreshed in the background (they never change).
  * Weather API: network first, last response as offline fallback.
  */
-const VERSION = 'timecast-v3.5.0';
+const VERSION = 'timecast-v3.6.0';
 const SHELL = [
   './',
   'index.html',
@@ -13,6 +13,7 @@ const SHELL = [
   'css/style.css',
   'css/how.css',
   'js/how.js',
+  'js/roll.js',
   'js/app.js',
   'js/weather.js',
   'js/conditions.js',

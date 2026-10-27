@@ -347,6 +347,24 @@ strong { color: var(--ink); font-weight: 600; }
 .night-mark--moon { box-shadow: inset 0 0 0 1.2px var(--ink-soft); transform: translateX(calc(-100% - 2px)); }
 .night-mark--sun { background: var(--ink-soft); transform: translateX(2px); }
 
+/* Odometer roll for changing numbers (js/roll.js). Clipped vertically
+   only, so letter spacing and glows aren't cut */
+.roll {
+  position: relative;
+  display: inline-block;
+  white-space: pre;
+  vertical-align: bottom;
+  clip-path: inset(0 -0.6em);
+}
+
+.roll__in { display: inline-block; }
+
+.roll__out {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
 /* ---- Legend lists ---- */
 .legend {
   list-style: none;

@@ -4,6 +4,7 @@
 import { colorByCelsius, colorByHour, desaturate, mix, luminance, sunIntensity, token } from './palette.js';
 import { getCondition } from './conditions.js';
 import { createScene } from './scene.js';
+import { rollText } from './roll.js';
 
 const $ = sel => document.querySelector(sel);
 const pad = n => String(n).padStart(2, '0');
@@ -155,11 +156,15 @@ function mark(kind, i) {
   $('#demo-timeline-night').append(m);
 }
 
+let current = -1;
 function selectBar(i) {
   i = Math.max(0, Math.min(n - 1, i));
+  if (i === current) return;
+  const dir = current < 0 ? 0 : Math.sign(i - current);
+  current = i;
   [...track.children].forEach((b, j) => b.classList.toggle('is-selected', j === i));
   const [hour, code, temp] = day[i];
-  $('#demo-timeline-label').textContent = `${i === 0 ? 'Now' : `${pad(hour)}:00`} · ${temp}° · ${getCondition(code).label}`;
+  rollText($('#demo-timeline-label'), `${i === 0 ? 'Now' : `${pad(hour)}:00`} · ${temp}° · ${getCondition(code).label}`, dir);
 }
 const indexAt = e => Math.floor(((e.clientX - track.getBoundingClientRect().left) / track.clientWidth) * n);
 let dragging = false;

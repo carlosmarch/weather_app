@@ -10,6 +10,7 @@ import { getForecast, reverseGeocode, searchCity, getPosition } from './weather.
 import { getCondition, CODES } from './conditions.js';
 import { colorByCelsius, colorByHour, desaturate, sunIntensity, starsByHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
+import { rollText } from './roll.js';
 import { cities } from './cities.js';
 
 const REFRESH_MS = 15 * 60 * 1000;
@@ -56,6 +57,7 @@ const state = {
   skyIndex: 0,
   lastKey: '',
   iconKey: '',
+  rollDir: 0,
   refreshTimer: 0,
   demo: null,
 };
@@ -189,10 +191,13 @@ function render() {
   el.condition.classList.remove('is-status');
   setText(el.condition, cond.label, 'animate-down', changed);
   el.city.textContent = state.place.label;
+  // numbers roll with the scrub direction (forward: up, back: down)
+  const dir = state.rollDir;
+  state.rollDir = 0;
   el.date.classList.remove('is-detail');
-  el.date.textContent = `${DAYS[local.getUTCDay()]}, ${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]}`;
-  renderTemp(h.temp);
-  el.label.textContent = `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°`;
+  rollText(el.date, `${DAYS[local.getUTCDay()]}, ${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]}`, dir);
+  renderTemp(h.temp, dir);
+  rollText(el.label, `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°`, dir);
 
   if (!changed) return;
 
@@ -283,9 +288,15 @@ function makeDayOrNight(isDay, celsius, veiled) {
   el.icon.append(body);
 }
 
-function renderTemp(celsius) {
+function renderTemp(celsius, dir = 0) {
   el.temp.hidden = false;
-  el.temp.innerHTML = `${toUnit(celsius)}<sup>°</sup><small>${state.unit}</small>`;
+  let num = el.temp.querySelector('.temp__num');
+  if (!num) {
+    el.temp.innerHTML = '<span class="temp__num"></span><sup>°</sup><small></small>';
+    num = el.temp.querySelector('.temp__num');
+  }
+  rollText(num, String(toUnit(celsius)), dir);
+  el.temp.querySelector('small').textContent = state.unit;
 }
 
 function toUnit(celsius) {
@@ -325,7 +336,7 @@ function showError(msg, err) {
   el.condition.classList.remove('is-status');
   setText(el.condition, msg, 'animate-down', true);
   // the actual reason, small, so it can be reported
-  el.date.textContent = err ? String(err.message || err).slice(0, 120) : '';
+  rollText(el.date, err ? String(err.message || err).slice(0, 120) : '');
   el.date.classList.toggle('is-detail', !!err);
   el.timeline.hidden = true;
   el.temp.hidden = true;
@@ -409,6 +420,7 @@ function select(i) {
   const n = state.forecast.hours.length;
   i = Math.max(0, Math.min(n - 1, i));
   if (i === state.selected) return;
+  state.rollDir = Math.sign(i - state.selected);
   state.selected = i;
   markSelected();
   render();
