@@ -656,6 +656,12 @@ a.menu__item { color: inherit; text-decoration: none; }
 
 .menu__item[disabled] { opacity: 0.4; cursor: default; }
 
+.menu__divider {
+  height: 1px;
+  margin: 4px 14px;
+  background: var(--glass-row);
+}
+
 .menu__row {
   justify-content: space-between;
   margin-top: 4px;
