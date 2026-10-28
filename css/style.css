@@ -168,22 +168,31 @@ button {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  opacity: 0.55;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
-.tool:hover { opacity: 1; background: var(--ink-faint); }
-.tool:active { opacity: 1; }
+/* Hover only where there is a pointer: on touch screens it sticks after a
+   tap and leaves a grey circle behind the button */
+@media (hover: hover) {
+  .tool:hover { background: var(--ink-faint); }
+  .tool:hover svg { stroke-opacity: 1; }
+}
 
+/* Dim the stroke rather than the button: opacity below 1 puts the button
+   in its own layer, which Safari rasterises soft and the icons look blurred */
 .tool svg {
   width: 20px;
   height: 20px;
   fill: none;
   stroke: currentColor;
+  stroke-opacity: 0.55;
+  transition: stroke-opacity 0.2s ease;
   stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.tool:active svg { stroke-opacity: 1; }
 
 /* ======================================================================
    CONTENT
