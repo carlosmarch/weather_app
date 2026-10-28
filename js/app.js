@@ -8,7 +8,7 @@
 
 import { getForecast, getNowMany, reverseGeocode, searchCity, getPosition } from './weather.js';
 import { getCondition, weatherMarks, iceHalo, CODES } from './conditions.js';
-import { skyColors, sunIntensity, starsByHour, isDayHour, luminance, mix } from './palette.js';
+import { skyColors, skyHour, sunIntensity, starsByHour, isDayHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
 import { renderPicture } from './picture.js';
@@ -192,13 +192,13 @@ setInterval(() => {
    RENDER
    ====================================================================== */
 function render() {
-  const { hours, offset } = state.forecast;
+  const { hours, offset, daylight } = state.forecast;
   const h = hours[state.selected];
-  const { local, hour, cond, timeColor, tempColor } = skyFor(h, offset);
+  const { local, hour, sky, cond, timeColor, tempColor } = skyFor(h, offset, daylight);
   const isDay = h.isDay;
 
   // Only rebuild the scene when what it shows actually changes
-  const key = [h.code, Math.round(h.temp), isDay, Math.floor(hour), Math.round(h.wind / 10)].join('|');
+  const key = [h.code, Math.round(h.temp), isDay, Math.floor(sky), Math.round(h.wind / 10)].join('|');
   const changed = key !== state.lastKey;
   state.lastKey = key;
 
@@ -235,7 +235,7 @@ function render() {
     veiled: !!cond.fx.veil, shining: !!sun.shining, blazing: !!sun.blazing, halo, label: cond.label };
 
   // Environment particles
-  const stars = isDay ? 0 : starsByHour(hour) || 40;
+  const stars = isDay ? 0 : starsByHour(sky) || 40;
   scene.set({ fx: cond.fx, stars: cond.fx.clouds > 10 ? stars / 4 : stars, timeColor });
 
   if (state.demo === true) {
@@ -246,16 +246,18 @@ function render() {
 
 /* Colours and condition for one forecast hour. Shared by the sky and
    the timeline bars, so each bar is a small copy of that hour's sky */
-function skyFor(h, offset) {
+function skyFor(h, offset, daylight) {
   // Local time at the location, not on the device
   const ts = h.isNow ? Date.now() : h.time * 1000;
   const local = new Date(ts + offset * 1000);
   const hour = local.getUTCHours() + local.getUTCMinutes() / 60;
+  // the colours follow the real sunrise and sunset, not the clock
+  const sky = skyHour(hour, ts / 1000, daylight);
 
   const cond = getCondition(h.code, h.wind, h.data);
   // night darkens but keeps the colour; weather drains or (snow) lifts it
-  const { timeColor, tempColor } = skyColors({ hour, temp: h.temp, isDay: h.isDay, fx: cond.fx });
-  return { local, hour, cond, timeColor, tempColor };
+  const { timeColor, tempColor } = skyColors({ hour: sky, temp: h.temp, isDay: h.isDay, fx: cond.fx });
+  return { local, hour, sky, cond, timeColor, tempColor };
 }
 
 function gradient(el, angle, from, to) {
@@ -373,7 +375,7 @@ function showError(msg, err) {
    TIMELINE
    ====================================================================== */
 function buildTimeline() {
-  const { hours, offset } = state.forecast;
+  const { hours, offset, daylight } = state.forecast;
   const temps = hours.map(h => h.temp);
   const min = Math.min(...temps), max = Math.max(...temps);
   const range = Math.max(max - min, 4);
@@ -384,7 +386,7 @@ function buildTimeline() {
   el.track.textContent = '';
   el.track.setAttribute('aria-valuemax', hours.length - 1);
   hours.forEach((h, i) => {
-    const { local, cond, timeColor, tempColor } = skyFor(h, offset);
+    const { local, cond, timeColor, tempColor } = skyFor(h, offset, daylight);
     const bar = document.createElement('div');
     bar.className = 'bar';
     bar.style.height = `${18 + ((h.temp - min) / range) * 82}%`;
@@ -785,7 +787,7 @@ function renderExplore(row) {
   const list = rank(theme.id, explore.now);
   if (!list.length) return html + `<li class="search__empty">${esc(theme.empty)}</li>`;
   return html + list.map(p => {
-    const { timeColor, tempColor } = skyFor(p.now, p.offset);
+    const { timeColor, tempColor } = skyFor(p.now, p.offset, p.daylight);
     const cond = p.condition.charAt(0).toUpperCase() + p.condition.slice(1);
     const note = [`${toUnit(p.now.temp)}°${state.unit}`, cond, p.detail].filter(Boolean).join(' · ');
     return row({ name: p.name, region: p.region, note, label: p.label, lat: p.lat, lon: p.lon, from: timeColor, to: tempColor });
@@ -1031,7 +1033,7 @@ async function savePicture() {
    fallback for older pins and shared links */
 function saveScene() {
   const h = state.forecast.hours[state.selected];
-  const { local, hour, cond, timeColor, tempColor } = skyFor(h, state.forecast.offset);
+  const { local, hour, cond, timeColor, tempColor } = skyFor(h, state.forecast.offset, state.forecast.daylight);
   const params = new URLSearchParams({
     code: h.code, temp: h.temp.toFixed(1), hour: hour.toFixed(2), wind: Math.round(h.wind || 0),
     day: h.isDay ? 1 : 0, name: state.place.label, saved: 1,
@@ -1058,9 +1060,8 @@ function saveScene() {
 
 // The forecast as saved: "now" becomes the moment it was saved
 function frozenForecast() {
-  const { offset, hours } = state.forecast;
   const saved = Math.floor(Date.now() / 1000);
-  return { offset, hours: hours.map(({ isNow, ...h }) => (isNow ? { ...h, time: saved } : h)) };
+  return { ...state.forecast, hours: state.forecast.hours.map(({ isNow, ...h }) => (isNow ? { ...h, time: saved } : h)) };
 }
 
 function openScene({ forecast, selected = 0, label }) {

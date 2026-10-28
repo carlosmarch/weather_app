@@ -14,6 +14,7 @@ export async function getForecast(lat, lon) {
     longitude: lon,
     current: 'temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m',
     hourly: 'temperature_2m,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility',
+    daily: 'sunrise,sunset',
     forecast_days: 2,
     timezone: 'auto',
     timeformat: 'unixtime',
@@ -62,11 +63,17 @@ export async function getForecast(lat, lon) {
     });
   }
 
-  return { offset, hours };
+  return { offset, hours, daylight: daylight(data.daily) };
+}
+
+/* [[sunrise, sunset], ...] in unix seconds, one pair per local day */
+function daylight(d) {
+  if (!d || !Array.isArray(d.sunrise) || !Array.isArray(d.sunset)) return undefined;
+  return d.sunrise.map((r, i) => [r, d.sunset[i]]);
 }
 
 /* Current weather for many places (Explore), in batches of 100 so URLs
-   stay short. Returns one { offset, now } per place, in the same order;
+   stay short. Returns one { offset, now, daylight } per place, in the same order;
    null for places whose batch failed */
 export async function getNowMany(places, signal) {
   const batches = [];
@@ -81,6 +88,8 @@ async function getNowBatch(places, signal) {
     latitude: places.map(p => p.lat).join(','),
     longitude: places.map(p => p.lon).join(','),
     current: 'temperature_2m,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility',
+    daily: 'sunrise,sunset',
+    forecast_days: 1,
     timezone: places.map(() => 'auto').join(','),
     timeformat: 'unixtime',
   });
@@ -91,6 +100,7 @@ async function getNowBatch(places, signal) {
     const rain = c.rain, showers = c.showers;
     return {
       offset: d.utc_offset_seconds || 0,
+      daylight: daylight(d.daily),
       now: {
         time: c.time,
         temp: c.temperature_2m,
