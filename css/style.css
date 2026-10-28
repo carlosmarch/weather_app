@@ -17,6 +17,7 @@
   --ink: var(--ink-dark);
   --ink-soft: var(--ink-dark-soft);
   --ink-faint: var(--ink-dark-faint);
+  --glass-shadow: rgba(0, 0, 0, 0.08);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -161,23 +162,35 @@ button {
 .is-wallpaper .retry { visibility: hidden; pointer-events: none; }
 
 .toolbar__left,
-.toolbar__right { display: flex; gap: 4px; }
+.toolbar__right { display: flex; gap: 10px; }
 
+/* iOS-style glass: the sky blurred and brightened behind a pale pane, a
+   bright rim along the top edge and a soft shadow lifting it off the sky */
 .tool {
   display: grid;
   place-items: center;
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  transition: background-color 0.2s ease;
+  background: var(--glass);
+  backdrop-filter: blur(14px) saturate(1.6) brightness(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6) brightness(1.08);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-stroke),
+    inset 0 1px 0.5px var(--glass-sheen),
+    inset 0 -1px 0.5px var(--glass-sheen-low),
+    0 4px 14px var(--glass-shadow);
+  transition: background-color 0.2s ease, transform 0.25s var(--ease);
 }
 
 /* Hover only where there is a pointer: on touch screens it sticks after a
-   tap and leaves a grey circle behind the button */
+   tap and leaves a lighter pane behind the button */
 @media (hover: hover) {
-  .tool:hover { background: var(--ink-faint); }
+  .tool:hover { background: var(--glass-hover); }
   .tool:hover svg { stroke-opacity: 1; }
 }
+
+.tool:active { transform: scale(0.92); }
 
 /* Dim the stroke rather than the button: opacity below 1 puts the button
    in its own layer, which Safari rasterises soft and the icons look blurred */
@@ -186,7 +199,7 @@ button {
   height: 20px;
   fill: none;
   stroke: currentColor;
-  stroke-opacity: 0.55;
+  stroke-opacity: 0.85;
   transition: stroke-opacity 0.2s ease;
   stroke-width: 1.6;
   stroke-linecap: round;
