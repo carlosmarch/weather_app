@@ -146,18 +146,18 @@ button {
 }
 
 /* Wallpaper view (?wallpaper): no buttons, words or forecast bar, just the
-   sky and the circle, centred for a desktop background */
+   sky and the circle. The words keep their space, so the circle stays
+   where it sits in the other views */
 .is-wallpaper .toolbar,
 .is-wallpaper .timeline,
 .is-wallpaper .menu,
 .is-wallpaper .toast,
 .is-wallpaper .sheet,
-.is-wallpaper .domlog,
+.is-wallpaper .domlog { display: none !important; }
 .is-wallpaper .text-top,
 .is-wallpaper .text-bottom,
 .is-wallpaper .temperature,
-.is-wallpaper .retry { display: none !important; }
-.is-wallpaper .content { padding: var(--gutter); }
+.is-wallpaper .retry { visibility: hidden; pointer-events: none; }
 
 .toolbar__left,
 .toolbar__right { display: flex; gap: 4px; }
