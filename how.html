@@ -35,7 +35,7 @@
 
     <section>
       <h2><span>02</span>The sky</h2>
-      <p>The background mixes two colours in a diagonal gradient: one for the <strong>time of day</strong> where you are, one for the <strong>temperature</strong>.</p>
+      <p>The background mixes two colours in a diagonal gradient: one for the <strong>time of day</strong> where you are, one for the <strong>temperature</strong>. The time of day follows the real sun: sunrise always gets the dawn colours and sunset the evening ones, so a short winter day or a long summer evening keeps its colours in step with the light.</p>
       <div class="strip">
         <div class="strip__label">Time of day</div>
         <div class="strip__bar" id="strip-time"></div>
@@ -46,13 +46,15 @@
         <div class="strip__bar" id="strip-temp"></div>
         <div class="strip__ticks"><span>−20°</span><span>−10°</span><span>0°</span><span>10°</span><span>20°</span><span>30°</span><span>40°</span></div>
       </div>
-      <p>Below zero the sky turns ice blue: deeper the colder it gets, pale frost blue at 0°. Three things adjust the colours. At night the sky darkens but keeps its colour, so a freezing night is deep blue and a mild one stays warm. Clouds, fog and rain take colour out of the sky, while snow makes it brighter. On very pale skies the text turns dark so it stays readable.</p>
+      <p>Below zero the sky turns ice blue: deeper the colder it gets, pale frost blue at 0°. Three things adjust the colours. At night the sky darkens but keeps its colour, so a freezing night is deep blue and a mild one stays warm. Clouds, fog and rain take colour out of the sky, while snow makes it brighter. On very pale skies the text turns dark so it stays readable. The colours always use the real temperature; the forecast bar shows what it feels like with wind and humidity, e.g. Now · −5°.</p>
       <div class="tiles tiles--4" id="demo-skies"></div>
     </section>
 
     <section>
       <h2><span>03</span>The weather</h2>
-      <p>The weather is drawn live on top of the sky. Each kind has steps, set by the measured amount in the forecast: heavier rain falls faster and longer, heavier snow has bigger flakes, thicker fog rises higher, and stronger wind adds streaks and slants the rain.</p>
+      <p>The weather is drawn live on top of the sky. Each kind has steps, set by the measured amount in the forecast: more cloud draws more bands (only low, thick cloud greys the sky and hides the sun; thin high cloud lets it through), heavier rain falls faster and longer, heavier snow has bigger flakes, thicker fog rises higher, and stronger wind adds streaks and slants the rain.</p>
+      <h3>Clouds <span>how much of the sky</span></h3>
+      <div class="steps" id="demo-clouds"></div>
       <h3>Rain <span>mm per hour</span></h3>
       <div class="steps" id="demo-rain"></div>
       <h3>Snow <span>cm per hour</span></h3>

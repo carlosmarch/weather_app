@@ -25,9 +25,6 @@ const LABELS = {
 
 export const CODES = Object.keys(LABELS).map(Number);
 
-/* Cloud cover for codes without precipitation */
-const SKY = { 1: { clouds: 3 }, 2: { clouds: 7 }, 3: { clouds: 15, darken: 0.2 } };
-
 /* Typical amounts per code, used when the forecast has no measurement */
 const TYPICAL = {
   rain: { 51: 0.2, 53: 0.4, 55: 0.8, 56: 0.3, 57: 0.8, 61: 1.2, 63: 4, 65: 10, 66: 1.5, 67: 8,
@@ -35,7 +32,20 @@ const TYPICAL = {
   snow: { 48: 0.1, 56: 0.1, 57: 0.2, 66: 0.2, 67: 0.4, 71: 0.3, 73: 1.5, 75: 3.5, 77: 0.5,
           85: 0.8, 86: 3, 96: 0.3, 99: 0.6 },
   vis:  { 45: 600, 48: 400 },
+  // % of the sky, for the codes without rain, snow or fog (0-3)
+  cloud: { 0: 0, 1: 20, 2: 45, 3: 100 },
 };
+
+/* Cloud cover (%) -> cloud bands, for the codes without rain, snow or
+   fog. All cloud draws bands; only low and mid cloud greys the sky and
+   hides the sun, since thin high cloud lets the sun through */
+export const OVERCAST = 80; // % of low and mid cloud: above this the sky darkens
+export function cloudFx(cover, thick = cover) {
+  thick = Math.min(thick, cover);
+  const fx = { clouds: Math.round(cover * 0.15), thick: Math.round(thick * 0.15) };
+  if (thick > OVERCAST) fx.darken = ((thick - OVERCAST) / (100 - OVERCAST)) * 0.2;
+  return fx;
+}
 
 /* ---- Intensity steps. Each step's `max` is exclusive ---- */
 export const STEPS = {
@@ -108,7 +118,8 @@ export function windSpeed(windKmh, gustKmh) {
   return Math.max(num(windKmh), num(gustKmh) * 0.6);
 }
 
-/* data: { rain mm/h, snow cm/h, vis m, gust km/h } - any may be missing */
+/* data: { rain mm/h, snow cm/h, vis m, gust km/h, cloud %, lowCloud %
+   (low and mid layers) } - any may be missing */
 export function getCondition(code, windKmh = 0, data = {}) {
   const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
   const rain = num(data.rain) ?? TYPICAL.rain[code] ?? 0;
@@ -128,10 +139,13 @@ export function getCondition(code, windKmh = 0, data = {}) {
   // low visibility is fog only when it isn't just heavy rain or snow
   if (isFogCode || (levels.rain <= 1 && levels.snow <= 1)) levels.fog = fogLevel(vis);
 
-  const fx = { ...(SKY[code] || {}) };
+  const cover = code <= 3 ? num(data.cloud) ?? TYPICAL.cloud[code] ?? 0 : 0;
+  const fx = cover ? cloudFx(cover, num(data.lowCloud)) : {};
+  // clouds that come with rain, snow, fog or storms are always thick
   const take = step => {
     if (!step) return;
     fx.clouds = Math.max(fx.clouds || 0, step.clouds || 0);
+    fx.thick = Math.max(fx.thick || 0, step.clouds || 0);
     fx.darken = Math.max(fx.darken || 0, step.darken || 0);
   };
   if (levels.rain) {
@@ -152,6 +166,7 @@ export function getCondition(code, windKmh = 0, data = {}) {
     const s = STEPS.storm.steps[levels.storm - 1];
     fx.thunder = s.flashes; fx.flash = s.flash;
     fx.clouds = Math.max(fx.clouds || 0, 12);
+    fx.thick = Math.max(fx.thick || 0, 12);
     fx.darken = Math.max(fx.darken || 0, 0.2 + levels.storm * 0.03);
   }
   if (levels.wind) {
@@ -163,11 +178,12 @@ export function getCondition(code, windKmh = 0, data = {}) {
 
   // Clouds, fog and precipitation drain colour from the sky...
   const wet = fx.rain ? 0.1 : 0;
-  const sat = 1 - (fx.clouds || 0) * 0.025 - (fx.darken || 0) * 1.2 - (fx.fog || 0) * 0.04 - wet;
+  const thick = fx.thick || 0; // thin high cloud doesn't
+  const sat = 1 - thick * 0.025 - (fx.darken || 0) * 1.2 - (fx.fog || 0) * 0.04 - wet;
   fx.sat = Math.min(Math.max(sat, 0.4), 1);
   if (levels.snow && !levels.rain) fx.sat = Math.max(fx.sat, 0.7); // snow keeps colour
   // ...and hide the sun behind a veil
-  fx.veil = (fx.clouds || 0) >= 10 || levels.fog >= 2;
+  fx.veil = thick >= 10 || levels.fog >= 2;
 
   return { label: LABELS[code] || LABELS[0], fx, levels };
 }

@@ -13,7 +13,9 @@ export async function getForecast(lat, lon) {
     latitude: lat,
     longitude: lon,
     current: 'temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m',
-    hourly: 'temperature_2m,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility',
+    hourly: 'temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility,' +
+      'cloud_cover,cloud_cover_low,cloud_cover_mid',
+    daily: 'sunrise,sunset',
     forecast_days: 2,
     timezone: 'auto',
     timeformat: 'unixtime',
@@ -23,7 +25,7 @@ export async function getForecast(lat, lon) {
   const c = data.current;
 
   // Amounts that drive the intensity steps (rain mm/h, snow cm/h,
-  // visibility m, gusts km/h); missing values stay undefined
+  // visibility m, gusts km/h, cloud %); missing values stay undefined
   const h = data.hourly;
   const at = (key, i) => (h[key] && typeof h[key][i] === 'number' ? h[key][i] : undefined);
   const amounts = i => {
@@ -33,6 +35,8 @@ export async function getForecast(lat, lon) {
       snow: at('snowfall', i),
       vis: at('visibility', i),
       gust: at('wind_gusts_10m', i),
+      cloud: at('cloud_cover', i),
+      lowCloud: thick(at('cloud_cover_low', i), at('cloud_cover_mid', i)),
     };
   };
   // the hourly row covering "now" gives the current amounts
@@ -55,6 +59,7 @@ export async function getForecast(lat, lon) {
     hours.push({
       time: h.time[i],
       temp: h.temperature_2m[i],
+      feels: at('apparent_temperature', i),
       code: h.weather_code[i],
       isDay: !!h.is_day[i],
       wind: h.wind_speed_10m[i],
@@ -62,11 +67,23 @@ export async function getForecast(lat, lon) {
     });
   }
 
-  return { offset, hours };
+  return { offset, hours, daylight: daylight(data.daily) };
+}
+
+/* Low and mid cloud: the layers that grey the sky (high cloud is thin) */
+function thick(low, mid) {
+  if (typeof low !== 'number' && typeof mid !== 'number') return undefined;
+  return Math.max(low || 0, mid || 0);
+}
+
+/* [[sunrise, sunset], ...] in unix seconds, one pair per local day */
+function daylight(d) {
+  if (!d || !Array.isArray(d.sunrise) || !Array.isArray(d.sunset)) return undefined;
+  return d.sunrise.map((r, i) => [r, d.sunset[i]]);
 }
 
 /* Current weather for many places (Explore), in batches of 100 so URLs
-   stay short. Returns one { offset, now } per place, in the same order;
+   stay short. Returns one { offset, now, daylight } per place, in the same order;
    null for places whose batch failed */
 export async function getNowMany(places, signal) {
   const batches = [];
@@ -80,7 +97,10 @@ async function getNowBatch(places, signal) {
   const params = new URLSearchParams({
     latitude: places.map(p => p.lat).join(','),
     longitude: places.map(p => p.lon).join(','),
-    current: 'temperature_2m,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility',
+    current: 'temperature_2m,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility,' +
+      'cloud_cover,cloud_cover_low,cloud_cover_mid',
+    daily: 'sunrise,sunset',
+    forecast_days: 1,
     timezone: places.map(() => 'auto').join(','),
     timeformat: 'unixtime',
   });
@@ -91,6 +111,7 @@ async function getNowBatch(places, signal) {
     const rain = c.rain, showers = c.showers;
     return {
       offset: d.utc_offset_seconds || 0,
+      daylight: daylight(d.daily),
       now: {
         time: c.time,
         temp: c.temperature_2m,
@@ -103,6 +124,8 @@ async function getNowBatch(places, signal) {
           snow: c.snowfall,
           vis: c.visibility,
           gust: c.wind_gusts_10m,
+          cloud: c.cloud_cover,
+          lowCloud: thick(c.cloud_cover_low, c.cloud_cover_mid),
         },
       },
     };

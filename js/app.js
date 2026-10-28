@@ -8,7 +8,7 @@
 
 import { getForecast, getNowMany, reverseGeocode, searchCity, getPosition } from './weather.js';
 import { getCondition, weatherMarks, iceHalo, CODES } from './conditions.js';
-import { skyColors, sunIntensity, starsByHour, isDayHour, luminance, mix } from './palette.js';
+import { skyColors, skyHour, sunIntensity, starsByHour, isDayHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
 import { renderPicture } from './picture.js';
@@ -192,13 +192,13 @@ setInterval(() => {
    RENDER
    ====================================================================== */
 function render() {
-  const { hours, offset } = state.forecast;
+  const { hours, offset, daylight } = state.forecast;
   const h = hours[state.selected];
-  const { local, hour, cond, timeColor, tempColor } = skyFor(h, offset);
+  const { local, hour, sky, cond, timeColor, tempColor } = skyFor(h, offset, daylight);
   const isDay = h.isDay;
 
   // Only rebuild the scene when what it shows actually changes
-  const key = [h.code, Math.round(h.temp), isDay, Math.floor(hour), Math.round(h.wind / 10)].join('|');
+  const key = [h.code, Math.round(h.temp), isDay, Math.floor(sky), Math.round(h.wind / 10), cond.fx.clouds, cond.fx.veil].join('|');
   const changed = key !== state.lastKey;
   state.lastKey = key;
 
@@ -212,7 +212,9 @@ function render() {
   el.date.classList.remove('is-detail');
   rollText(el.date, `${DAYS[local.getUTCDay()]}, ${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]}`, dir);
   renderTemp(h.temp, dir);
-  rollText(el.label, `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°`, dir);
+  // the temperature is the big number above; the bar shows what it feels like
+  const feels = hasFeels(h) ? ` · ${toUnit(h.feels)}°` : '';
+  rollText(el.label, `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`}${feels}`, dir);
 
   if (!changed) return;
 
@@ -235,7 +237,7 @@ function render() {
     veiled: !!cond.fx.veil, shining: !!sun.shining, blazing: !!sun.blazing, halo, label: cond.label };
 
   // Environment particles
-  const stars = isDay ? 0 : starsByHour(hour) || 40;
+  const stars = isDay ? 0 : starsByHour(sky) || 40;
   scene.set({ fx: cond.fx, stars: cond.fx.clouds > 10 ? stars / 4 : stars, timeColor });
 
   if (state.demo === true) {
@@ -246,16 +248,18 @@ function render() {
 
 /* Colours and condition for one forecast hour. Shared by the sky and
    the timeline bars, so each bar is a small copy of that hour's sky */
-function skyFor(h, offset) {
+function skyFor(h, offset, daylight) {
   // Local time at the location, not on the device
   const ts = h.isNow ? Date.now() : h.time * 1000;
   const local = new Date(ts + offset * 1000);
   const hour = local.getUTCHours() + local.getUTCMinutes() / 60;
+  // the colours follow the real sunrise and sunset, not the clock
+  const sky = skyHour(hour, ts / 1000, daylight);
 
   const cond = getCondition(h.code, h.wind, h.data);
   // night darkens but keeps the colour; weather drains or (snow) lifts it
-  const { timeColor, tempColor } = skyColors({ hour, temp: h.temp, isDay: h.isDay, fx: cond.fx });
-  return { local, hour, cond, timeColor, tempColor };
+  const { timeColor, tempColor } = skyColors({ hour: sky, temp: h.temp, isDay: h.isDay, fx: cond.fx });
+  return { local, hour, sky, cond, timeColor, tempColor };
 }
 
 function gradient(el, angle, from, to) {
@@ -319,6 +323,11 @@ function renderTemp(celsius, dir = 0) {
   el.temp.querySelector('small').textContent = state.unit;
 }
 
+// demos and older saved scenes have no "feels like"
+function hasFeels(h) {
+  return typeof h.feels === 'number' && Number.isFinite(h.feels);
+}
+
 function toUnit(celsius) {
   return Math.round(state.unit === 'F' ? celsius * 9 / 5 + 32 : celsius);
 }
@@ -373,7 +382,7 @@ function showError(msg, err) {
    TIMELINE
    ====================================================================== */
 function buildTimeline() {
-  const { hours, offset } = state.forecast;
+  const { hours, offset, daylight } = state.forecast;
   const temps = hours.map(h => h.temp);
   const min = Math.min(...temps), max = Math.max(...temps);
   const range = Math.max(max - min, 4);
@@ -384,7 +393,7 @@ function buildTimeline() {
   el.track.textContent = '';
   el.track.setAttribute('aria-valuemax', hours.length - 1);
   hours.forEach((h, i) => {
-    const { local, cond, timeColor, tempColor } = skyFor(h, offset);
+    const { local, cond, timeColor, tempColor } = skyFor(h, offset, daylight);
     const bar = document.createElement('div');
     bar.className = 'bar';
     bar.style.height = `${18 + ((h.temp - min) / range) * 82}%`;
@@ -459,7 +468,8 @@ function markSelected() {
   el.track.setAttribute('aria-valuenow', state.selected);
   const h = state.forecast.hours[state.selected];
   const degrees = `${toUnit(h.temp)} degrees ${state.unit === 'F' ? 'Fahrenheit' : 'Celsius'}`;
-  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${degrees}, ${getCondition(h.code, h.wind, h.data).label}`);
+  const feels = hasFeels(h) ? `, feels like ${toUnit(h.feels)}` : '';
+  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${degrees}${feels}, ${getCondition(h.code, h.wind, h.data).label}`);
 }
 
 /* Dock-style magnification: bars near the pointer grow taller and wider,
@@ -811,7 +821,7 @@ function renderExplore(row) {
   const list = rank(theme.id, explore.now);
   if (!list.length) return html + `<li class="search__empty">${esc(theme.empty)}</li>`;
   return html + list.map(p => {
-    const { timeColor, tempColor } = skyFor(p.now, p.offset);
+    const { timeColor, tempColor } = skyFor(p.now, p.offset, p.daylight);
     const cond = p.condition.charAt(0).toUpperCase() + p.condition.slice(1);
     const note = [`${toUnit(p.now.temp)}°${state.unit}`, cond, p.detail].filter(Boolean).join(' · ');
     return row({ name: p.name, region: p.region, note, label: p.label, lat: p.lat, lon: p.lon, from: timeColor, to: tempColor });
@@ -1057,12 +1067,12 @@ async function savePicture() {
    fallback for older pins and shared links */
 function saveScene() {
   const h = state.forecast.hours[state.selected];
-  const { local, hour, cond, timeColor, tempColor } = skyFor(h, state.forecast.offset);
+  const { local, hour, cond, timeColor, tempColor } = skyFor(h, state.forecast.offset, state.forecast.daylight);
   const params = new URLSearchParams({
     code: h.code, temp: h.temp.toFixed(1), hour: hour.toFixed(2), wind: Math.round(h.wind || 0),
     day: h.isDay ? 1 : 0, name: state.place.label, saved: 1,
   });
-  for (const k of ['rain', 'snow', 'vis', 'gust']) {
+  for (const k of ['rain', 'snow', 'vis', 'gust', 'cloud', 'lowCloud']) {
     const v = h.data?.[k];
     if (typeof v === 'number' && Number.isFinite(v)) params.set(k, +v.toFixed(2));
   }
@@ -1084,9 +1094,8 @@ function saveScene() {
 
 // The forecast as saved: "now" becomes the moment it was saved
 function frozenForecast() {
-  const { offset, hours } = state.forecast;
   const saved = Math.floor(Date.now() / 1000);
-  return { offset, hours: hours.map(({ isNow, ...h }) => (isNow ? { ...h, time: saved } : h)) };
+  return { ...state.forecast, hours: state.forecast.hours.map(({ isNow, ...h }) => (isNow ? { ...h, time: saved } : h)) };
 }
 
 function openScene({ forecast, selected = 0, label }) {
@@ -1152,8 +1161,10 @@ function startDemo(params) {
     temp: num('temp', Math.round(Math.random() * 45 - 8)),
     hour: num('hour', Math.random() * 24),
     wind: num('wind', Math.random() * 40),
-    // optional measured amounts: &rain= mm/h, &snow= cm/h, &vis= m, &gust= km/h
-    data: { rain: num('rain'), snow: num('snow'), vis: num('vis'), gust: num('gust') },
+    // optional measured amounts: &rain= mm/h, &snow= cm/h, &vis= m, &gust= km/h,
+    // &cloud= % of the sky, &lowCloud= % of low and mid cloud
+    data: { rain: num('rain'), snow: num('snow'), vis: num('vis'), gust: num('gust'),
+            cloud: num('cloud'), lowCloud: num('lowCloud') },
     day: params.has('day') ? params.get('day') === '1' : undefined,
     saved: params.get('saved') === '1',
     label: params.get('name') || cityLabel(c),

@@ -152,7 +152,7 @@ export const THEMES = [
 
 export const EXPLORE_PLACES = PLACES;
 
-/* now: one { offset, now } per place, in PLACES order (see getNowMany) */
+/* now: one { offset, now, daylight } per place, in PLACES order (see getNowMany) */
 export function rank(themeId, now, count = 6) {
   const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
   return PLACES
@@ -161,7 +161,7 @@ export function rank(themeId, now, count = 6) {
       const n = now[i].now;
       const { label, levels } = getCondition(n.code, n.wind, n.data);
       const sun = sunAt(place.lat, place.lon, n.time ? n.time * 1000 : Date.now());
-      const p = { ...place, now: n, offset: now[i].offset, condition: label, levels, sun };
+      const p = { ...place, now: n, offset: now[i].offset, daylight: now[i].daylight, condition: label, levels, sun };
       const score = theme.score(p);
       return score === null || !Number.isFinite(score) ? null : { ...p, score, detail: theme.detail?.(p) || '' };
     })

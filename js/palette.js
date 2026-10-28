@@ -99,10 +99,34 @@ export function sunIntensity(celsius) {
   return SUN_STEPS.find(s => celsius >= s.min);
 }
 
+/* The clock day the time-of-day colours were made for */
+const SUNRISE_HOUR = 7;
+const SUNSET_HOUR = 20;
+
 /* Day or night from the clock alone, for skies without real sunrise
    and sunset (demo mode and the "How it works" page) */
 export function isDayHour(hour) {
-  return hour >= 7 && hour < 20;
+  return hour >= SUNRISE_HOUR && hour < SUNSET_HOUR;
+}
+
+/* The hour the colours are picked for: the real sunrise lands on 07:00
+   and the real sunset on 20:00, with the hours between stretched to fit,
+   so a short winter day or a long summer evening keeps its colours in
+   step with the sun. t: unix seconds; daylight: [[sunrise, sunset], ...]
+   in unix seconds, one pair per local day. Without it, or in polar day
+   or night (no sunrise or sunset), the clock hour is used as is */
+export function skyHour(hour, t, daylight) {
+  const ok = ([r, s]) => s - r > 1800 && s - r < 86400 - 1800;
+  if (!daylight?.length || !daylight.every(ok)) return hour;
+  // sunset the day before, then each sunrise and sunset, then the next sunrise
+  const events = [daylight[0][1] - 86400, ...daylight.flat(), daylight.at(-1)[0] + 86400];
+  const i = events.findIndex(e => e > t);
+  if (i < 1) return hour;
+  const f = (t - events[i - 1]) / (events[i] - events[i - 1]);
+  const isDay = i % 2 === 0; // after a sunrise (odd index), before a sunset
+  return isDay
+    ? SUNRISE_HOUR + f * (SUNSET_HOUR - SUNRISE_HOUR)
+    : (SUNSET_HOUR + f * (24 - SUNSET_HOUR + SUNRISE_HOUR)) % 24;
 }
 
 /* Stars, from the original returnColorByCurrentTime side effects */
