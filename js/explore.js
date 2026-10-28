@@ -6,7 +6,7 @@
  * them live.
  * [name, region, countryCode, latitude, longitude]
  */
-import { getCondition } from './conditions.js';
+import { getCondition, windSpeed } from './conditions.js';
 import { cities } from './cities.js';
 
 const PLACES = [
@@ -143,9 +143,11 @@ export const THEMES = [
   { id: 'fog', name: 'Fog', empty: 'No fog on the list right now',
     score: p => (p.levels.fog ? p.levels.fog * 100000 - num(p.now.data.vis) : null),
     detail: p => (typeof p.now.data.vis === 'number' ? `${Math.round(p.now.data.vis)} m visibility` : '') },
+  // ranked by the wind the scene draws, so the windiest list looks windiest
   { id: 'wind', name: 'Windiest', empty: '',
-    score: p => Math.max(num(p.now.wind), num(p.now.data.gust)),
-    detail: p => `${Math.round(Math.max(num(p.now.wind), num(p.now.data.gust)))} km/h` },
+    score: p => windSpeed(p.now.wind, p.now.data.gust),
+    detail: p => [`${Math.round(num(p.now.wind))} km/h`, p.now.data.gust > 0 ? `gusts ${Math.round(p.now.data.gust)}` : '']
+      .filter(Boolean).join(' · ') },
 ];
 
 export const EXPLORE_PLACES = PLACES;

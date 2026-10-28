@@ -99,6 +99,12 @@ export function sunIntensity(celsius) {
   return SUN_STEPS.find(s => celsius >= s.min);
 }
 
+/* Day or night from the clock alone, for skies without real sunrise
+   and sunset (demo mode and the "How it works" page) */
+export function isDayHour(hour) {
+  return hour >= 7 && hour < 20;
+}
+
 /* Stars, from the original returnColorByCurrentTime side effects */
 export function starsByHour(hour) {
   if (hour >= 19 || hour < 6) return 80;

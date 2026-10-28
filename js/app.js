@@ -8,7 +8,7 @@
 
 import { getForecast, getNowMany, reverseGeocode, searchCity, getPosition } from './weather.js';
 import { getCondition, weatherMarks, iceHalo, CODES } from './conditions.js';
-import { skyColors, sunIntensity, starsByHour, luminance, mix } from './palette.js';
+import { skyColors, sunIntensity, starsByHour, isDayHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
 import { renderPicture } from './picture.js';
@@ -457,7 +457,8 @@ function markSelected() {
   [...el.track.children].forEach((b, i) => b.classList.toggle('is-selected', i === state.selected));
   el.track.setAttribute('aria-valuenow', state.selected);
   const h = state.forecast.hours[state.selected];
-  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${Math.round(h.temp)} degrees, ${getCondition(h.code, h.wind, h.data).label}`);
+  const degrees = `${toUnit(h.temp)} degrees ${state.unit === 'F' ? 'Fahrenheit' : 'Celsius'}`;
+  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${degrees}, ${getCondition(h.code, h.wind, h.data).label}`);
 }
 
 /* Dock-style magnification: bars near the pointer grow taller and wider,
@@ -727,8 +728,8 @@ function togglePin(place) {
   const i = pins.findIndex(p => samePlace(p, place));
   if (i >= 0) pins.splice(i, 1);
   else if (place.demo) {
-    const { name, region, label, demo, from, to, forecast, selected } = place;
-    pins.push({ name, region, label, demo, from, to, forecast, selected });
+    const { name, region, label, demo, from, to, forecast, selected, time, temp, cond } = place;
+    pins.push({ name, region, label, demo, from, to, forecast, selected, time, temp, cond });
   }
   else pins.push({ name: place.name, region: place.region, label: place.label, lat: place.lat, lon: place.lon });
   try { localStorage.setItem('tc-pins', JSON.stringify(pins)); } catch {}
@@ -755,7 +756,7 @@ function renderSearch(list = null, empty = 'No cities found') {
   let html = '';
   if (list === null) {
     html += `<li class="place"><button type="button" class="place__go" data-go="locate">${ICON_LOCATE}<span>Use my location</span></button></li>`;
-    const pinnedPlaces = pins.filter(p => !p.demo), scenes = pins.filter(p => p.demo);
+    const pinnedPlaces = pins.filter(p => !p.demo), scenes = pins.filter(p => p.demo).map(sceneRow);
     if (pinnedPlaces.length) html += heading('Pinned') + pinnedPlaces.map(row).join('');
     if (scenes.length) html += heading('Saved scenes') + scenes.map(row).join('');
     html += renderExplore(row);
@@ -766,6 +767,13 @@ function renderSearch(list = null, empty = 'No cities found') {
   el.searchResults.innerHTML = html;
   // remember which place each pin button belongs to (for focus after re-render)
   el.searchResults.querySelectorAll('[data-pin]').forEach(b => { b.place = rows[+b.dataset.pin]; });
+}
+
+/* A saved scene's line in search, in the current unit (older scenes
+   saved the text, in the unit of the day) */
+function sceneRow(p) {
+  if (typeof p.temp !== 'number') return p;
+  return { ...p, region: `${p.time} · ${toUnit(p.temp)}°${state.unit} · ${p.cond}` };
 }
 
 function pickPlace(place) {
@@ -852,7 +860,9 @@ function syncMenu() {
 function setUnit(unit) {
   state.unit = unit;
   try { localStorage.setItem('tc-unit', unit); } catch {}
-  if (state.forecast) { render(); renderRange(); }
+  if (state.forecast) { render(); renderRange(); markSelected(); }
+  // saved scenes in the open search list show their temperature too
+  if (!el.search.hidden && el.searchInput.value.trim().length < 2) renderSearch();
   syncMenu();
 }
 
@@ -930,7 +940,7 @@ function saveScene() {
   const time = `${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
   const scene = {
     name: city,
-    region: `${time} · ${toUnit(h.temp)}° · ${cond.label}`,
+    time, temp: h.temp, cond: cond.label,
     label: state.place.label,
     demo, from: timeColor, to: tempColor,
     forecast: frozenForecast(), selected: state.selected,
@@ -1029,10 +1039,7 @@ function buildDemo({ code, temp, hour, wind, data = {}, day, saved = false, labe
   const deviceHour = d.getUTCHours() + d.getUTCMinutes() / 60;
   const offset = Math.round((hour - deviceHour) * 3600);
   const startHour = Math.floor((nowUtc / 1000 + 3600) / 3600) * 3600;
-  const isDayAt = t => {
-    const lh = new Date((t + offset) * 1000).getUTCHours();
-    return lh >= 7 && lh < 20;
-  };
+  const isDayAt = t => isDayHour(new Date((t + offset) * 1000).getUTCHours());
 
   const hours = [{ time: Math.floor(nowUtc / 1000), temp, code, isDay: day ?? isDayAt(nowUtc / 1000), wind, data, isNow: true }];
   for (let i = 0; i < 24; i++) {

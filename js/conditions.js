@@ -102,6 +102,12 @@ export function stormLevel(code, rainMm) {
   return 0;
 }
 
+/* The wind the scene draws: gusts count, softened (a gusty breeze isn't a gale) */
+export function windSpeed(windKmh, gustKmh) {
+  const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+  return Math.max(num(windKmh), num(gustKmh) * 0.6);
+}
+
 /* data: { rain mm/h, snow cm/h, vis m, gust km/h } - any may be missing */
 export function getCondition(code, windKmh = 0, data = {}) {
   const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
@@ -110,8 +116,7 @@ export function getCondition(code, windKmh = 0, data = {}) {
   const isFogCode = code === 45 || code === 48;
   let vis = num(data.vis) ?? TYPICAL.vis[code] ?? Infinity;
   if (isFogCode) vis = Math.min(vis, 999); // the code says fog: at least "Fog"
-  // gusts count, softened: a gusty breeze isn't a gale
-  const wind = Math.max(windKmh || 0, (num(data.gust) ?? 0) * 0.6);
+  const wind = windSpeed(windKmh, data.gust);
 
   const levels = {
     rain: rainLevel(rain),

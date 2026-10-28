@@ -18,6 +18,8 @@ The 2016 data visualization weather app (then called Timecast), rebuilt for 2026
 | Time of day | device clock | **the location's local time**, with real day/night |
 | Forecast | – | **24-hour timeline**: drag to watch the sky change hour by hour |
 | Temperature | hidden | shown; tap to switch °C/°F |
+| Explore | – | in search: the coldest, hottest, wettest, snowiest, stormiest, foggiest and windiest places right now, and where it's golden hour; the dice opens one of them |
+| Keep | – | **pin** places to the top of search, **save a scene** (place, hour and its 24-hour forecast) to open again later, save the screen as a picture |
 | Wind | `@todo` | wind streaks, and the rain slants with the wind |
 | Mobile | fixed paddings | safe areas, phone landscape, touch scrubbing, installable PWA, works offline |
 | Accessibility | – | keyboard support, reduced motion, dark text on very light skies |
@@ -49,14 +51,20 @@ Geolocation needs `localhost` or HTTPS.
 
 ```
 index.html
+how.html          "How it works", drawn with the app's own code
+css/tokens.css    colours, shared by the CSS and the JS
 css/style.css
-js/app.js         startup, rendering, timeline, search, demo mode
+css/how.css
+js/app.js         startup, rendering, timeline, search, pins and saved scenes, demo mode
 js/weather.js     Open-Meteo + geocoding calls
 js/conditions.js  WMO code -> label + effects (successor of icons.js)
 js/palette.js     original colours, blended
 js/scene.js       canvas particles
 js/cities.js      world capitals for random mode
 js/explore.js     Explore in search: extreme places, ranked by live weather
+js/picture.js     Save as picture: the screen drawn into a PNG
+js/roll.js        odometer-style number changes
+js/how.js         the "How it works" demos
 sw.js             offline cache
 ```
 
