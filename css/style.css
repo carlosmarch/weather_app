@@ -58,6 +58,7 @@ body {
   right: 0;
   height: var(--app-h, 100%);
   overflow: hidden;
+  -webkit-touch-callout: none; /* long press is wallpaper mode */
 }
 
 /* Installed iOS app: iOS doesn't paint fixed elements below the short
