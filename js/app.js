@@ -1273,6 +1273,10 @@ function esc(s) {
 function fitScreen() {
   const standalone = navigator.standalone === true;
   el.root.classList.toggle('is-standalone', standalone);
+  // iOS 26 tints the top of the installed app with theme-color and fades it
+  // into the page: a dark blurred band over the top buttons. The sky runs
+  // under the translucent status bar anyway, so drop it there
+  if (standalone) el.themeColor.remove();
   const measure = () => {
     let h = window.innerHeight;
     if (standalone) {
