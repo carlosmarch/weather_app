@@ -161,6 +161,18 @@ const skies = [
 $('#demo-skies').append(...skies.map(c => tile(c)));
 
 /* 03 · The weather: every step of each kind, live */
+const CLOUDS = [
+  { code: 1, cloud: 20, title: 'Few clouds', sub: '20%' },
+  { code: 2, cloud: 50, title: 'Partly cloudy', sub: '50%' },
+  { code: 3, cloud: 75, title: 'Mostly cloudy', sub: '75%' },
+  { code: 3, cloud: 100, title: 'Overcast', sub: '100% · veiled sun' },
+  { code: 3, cloud: 100, lowCloud: 10, title: 'High cloud', sub: '100%, thin · sun shines' },
+];
+$('#demo-clouds').append(...CLOUDS.map(c => tile({
+  hour: 13, temp: 20, code: c.code, data: { cloud: c.cloud, lowCloud: c.lowCloud ?? c.cloud },
+  title: c.title, sub: c.sub, live: true,
+})));
+
 const RAIN_AT = [0.3, 1.5, 5, 12, 35, 70];
 $('#demo-rain').append(...STEPS.rain.steps.map((st, i) => withMark(tile({
   hour: 15, temp: 14, code: 63, data: { rain: RAIN_AT[i], snow: 0, vis: 20000 },

@@ -198,7 +198,7 @@ function render() {
   const isDay = h.isDay;
 
   // Only rebuild the scene when what it shows actually changes
-  const key = [h.code, Math.round(h.temp), isDay, Math.floor(sky), Math.round(h.wind / 10)].join('|');
+  const key = [h.code, Math.round(h.temp), isDay, Math.floor(sky), Math.round(h.wind / 10), cond.fx.clouds, cond.fx.veil].join('|');
   const changed = key !== state.lastKey;
   state.lastKey = key;
 
@@ -1038,7 +1038,7 @@ function saveScene() {
     code: h.code, temp: h.temp.toFixed(1), hour: hour.toFixed(2), wind: Math.round(h.wind || 0),
     day: h.isDay ? 1 : 0, name: state.place.label, saved: 1,
   });
-  for (const k of ['rain', 'snow', 'vis', 'gust']) {
+  for (const k of ['rain', 'snow', 'vis', 'gust', 'cloud', 'lowCloud']) {
     const v = h.data?.[k];
     if (typeof v === 'number' && Number.isFinite(v)) params.set(k, +v.toFixed(2));
   }
@@ -1127,8 +1127,10 @@ function startDemo(params) {
     temp: num('temp', Math.round(Math.random() * 45 - 8)),
     hour: num('hour', Math.random() * 24),
     wind: num('wind', Math.random() * 40),
-    // optional measured amounts: &rain= mm/h, &snow= cm/h, &vis= m, &gust= km/h
-    data: { rain: num('rain'), snow: num('snow'), vis: num('vis'), gust: num('gust') },
+    // optional measured amounts: &rain= mm/h, &snow= cm/h, &vis= m, &gust= km/h,
+    // &cloud= % of the sky, &lowCloud= % of low and mid cloud
+    data: { rain: num('rain'), snow: num('snow'), vis: num('vis'), gust: num('gust'),
+            cloud: num('cloud'), lowCloud: num('lowCloud') },
     day: params.has('day') ? params.get('day') === '1' : undefined,
     saved: params.get('saved') === '1',
     label: params.get('name') || cityLabel(c),
