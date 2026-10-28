@@ -40,6 +40,7 @@ const el = {
   high: $('#timeline-high'),
   retry: $('#retry'),
   menu: $('#menu'),
+  sheet: $('#sheet'),
   menuBtn: $('#btn-menu'),
   search: $('#search'),
   searchForm: $('#search-form'),
@@ -494,7 +495,7 @@ function indexFromPointer(e) {
    UI EVENTS
    ====================================================================== */
 function bindUI() {
-  $('#btn-random').addEventListener('click', () => (state.demo ? randomDemo() : loadRandomExtreme()));
+  bindDice();
   $('#btn-search').addEventListener('click', openSearch);
   bindMenu();
   el.retry.addEventListener('click', () => {
@@ -571,10 +572,11 @@ function bindUI() {
   // Tap the screen (not a control) to hide / show the top buttons and the
   // low · now · high row; a tap that closes the menu or search doesn't count
   let overlayOpen = false;
-  el.app.addEventListener('pointerdown', () => { overlayOpen = !el.menu.hidden || !el.search.hidden; }, true);
+  const anyOpen = () => !el.menu.hidden || !el.search.hidden || !el.sheet.hidden;
+  el.app.addEventListener('pointerdown', () => { overlayOpen = anyOpen(); }, true);
   el.app.addEventListener('click', e => {
-    if (overlayOpen || !el.menu.hidden || !el.search.hidden) return;
-    if (e.target.closest('button, a, input, .timeline, .menu, .search, .toast, .retry')) return;
+    if (overlayOpen || anyOpen()) return;
+    if (e.target.closest('button, a, input, .timeline, .menu, .search, .sheet, .toast, .retry')) return;
     toggleClean();
   });
 
@@ -584,13 +586,22 @@ function bindUI() {
       if (e.key === 'Escape') closeSearch();
       return;
     }
+    if (!el.sheet.hidden) {
+      if (e.key === 'Escape') { closeSheet(); $('#btn-random').focus({ preventScroll: true }); }
+      return;
+    }
     if (e.target.closest('input, [role="slider"]')) return;
-    if (e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) { e.preventDefault(); openSearch(); }
-    else if (e.key === 'r') $('#btn-random').click();
-    else if (e.key === '?') location.href = 'how.html';
-    else if (e.key === 'h') toggleClean();
-    else if (e.key === 'ArrowRight' && state.forecast) select(state.selected + 1);
-    else if (e.key === 'ArrowLeft' && state.forecast) select(state.selected - 1);
+    if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openSearch(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const key = e.key.toLowerCase();
+    if (key === '/') { e.preventDefault(); openSearch(); }
+    else if (e.key === 'R') openSheet();
+    else if (key === 'r') $('#btn-random').click();
+    else if (key === '?') location.href = 'how.html';
+    else if (key === 'h') toggleClean();
+    else if (key === 'arrowright' && state.forecast) select(state.selected + 1);
+    else if (key === 'arrowleft' && state.forecast) select(state.selected - 1);
+    else if (Object.hasOwn(menuKeys, key)) menuKeys[key]();
   });
 
   // Search: suggestions and pinned places until something is typed
@@ -662,27 +673,103 @@ function loadExplore() {
   return explore.pending;
 }
 
-/* Dice: a random Explore theme, then one of its most extreme places.
-   Falls back to a random capital when the live data can't be fetched */
-let lastDiceTheme = '';
-async function loadRandomExtreme() {
+/* Dice: a tap picks a random Explore theme; a long press (or right
+   click, or Shift+R) opens a sheet to choose the theme */
+function bindDice() {
+  const btn = $('#btn-random');
+  let timer = 0, held = false;
+  btn.addEventListener('pointerdown', e => {
+    held = false;
+    clearTimeout(timer);
+    if (e.button || state.demo) return;
+    timer = setTimeout(() => { held = true; openSheet(); }, 500);
+  });
+  for (const type of ['pointerup', 'pointerleave', 'pointercancel']) btn.addEventListener(type, () => clearTimeout(timer));
+  // touch browsers fire it on a long press too
+  btn.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    clearTimeout(timer);
+    held = true;
+    openSheet();
+  });
+  btn.addEventListener('click', e => {
+    if (held && e.detail) { held = false; return; }
+    state.demo ? randomDemo() : loadRandomExtreme();
+  });
+
+  el.sheet.addEventListener('click', e => {
+    if (e.target.id === 'sheet-backdrop') return closeSheet();
+    const opt = e.target.closest('[data-theme]');
+    if (!opt) return;
+    closeSheet();
+    loadExtreme(THEMES.find(t => t.id === opt.dataset.theme));
+  });
+}
+
+function openSheet() {
+  if (state.demo || !el.sheet.hidden) return;
+  closeMenu();
+  renderSheet();
+  el.sheet.hidden = false;
+  el.sheet.querySelector('.sheet__option:not([disabled])')?.focus({ preventScroll: true });
+  // fetch or refresh the live data, then grey out the themes with no place
+  loadExplore().then(() => { if (!el.sheet.hidden) renderSheet(); });
+}
+
+function closeSheet() {
+  el.sheet.hidden = true;
+}
+
+function renderSheet() {
+  const focused = document.activeElement?.dataset.theme;
+  $('#sheet-options').innerHTML = THEMES.map(t => {
+    const none = explore.now && !extremesFor(t).length;
+    return `<button type="button" class="sheet__option" data-theme="${t.id}"${none ? ' disabled' : ''}>${esc(t.name)}</button>`;
+  }).join('');
+  if (focused) $(`#sheet-options [data-theme="${focused}"]:not([disabled])`)?.focus({ preventScroll: true });
+}
+
+/* A theme's most extreme places right now, minus the one on screen */
+function extremesFor(theme) {
+  const here = state.place && placeKey(state.place);
+  return rank(theme.id, explore.now, 3).filter(p => placeKey(p) !== here);
+}
+
+function goToExtreme(theme) {
+  const list = extremesFor(theme);
+  if (!list.length) return false;
+  const p = list[Math.floor(Math.random() * list.length)];
+  lastDiceTheme = theme.id;
+  toast(`${theme.name} right now · ${p.name}`);
+  loadPlace({ lat: p.lat, lon: p.lon, label: p.label });
+  return true;
+}
+
+async function withDiceBusy(fn) {
   const btn = $('#btn-random');
   if (btn.classList.contains('is-busy')) return;
   btn.classList.add('is-busy');
   try { await loadExplore(); } finally { btn.classList.remove('is-busy'); }
-  if (!explore.now) return loadRandomCity();
+  fn();
+}
 
-  const here = state.place && placeKey(state.place);
-  const themes = THEMES.filter(t => t.id !== lastDiceTheme).sort(() => Math.random() - 0.5);
-  for (const theme of themes) {
-    const list = rank(theme.id, explore.now, 3).filter(p => placeKey(p) !== here);
-    if (!list.length) continue;
-    const p = list[Math.floor(Math.random() * list.length)];
-    lastDiceTheme = theme.id;
-    toast(`${theme.name} right now · ${p.name}`);
-    return loadPlace({ lat: p.lat, lon: p.lon, label: p.label });
-  }
-  loadRandomCity();
+/* One of the chosen theme's most extreme places */
+function loadExtreme(theme) {
+  withDiceBusy(() => {
+    if (!explore.now) toast('Explore unavailable');
+    else if (!goToExtreme(theme)) toast(theme.empty || `No ${theme.name.toLowerCase()} right now`);
+  });
+}
+
+/* A random Explore theme, then one of its most extreme places.
+   Falls back to a random capital when the live data can't be fetched */
+let lastDiceTheme = '';
+function loadRandomExtreme() {
+  withDiceBusy(() => {
+    if (!explore.now) return loadRandomCity();
+    const themes = THEMES.filter(t => t.id !== lastDiceTheme).sort(() => Math.random() - 0.5);
+    if (!themes.some(goToExtreme)) loadRandomCity();
+  });
 }
 
 function renderExplore(row) {
@@ -814,6 +901,25 @@ function bindMenu() {
 
 /* Clean view (?wallpaper=info): only the sky, the circle, the words and
    the bars. A tap turns it on or off, and leaves the sky-only view */
+/* The options menu's keys, shown next to each item */
+const menuKeys = {
+  l: () => $('#menu-locate').click(),
+  w: () => setWallpaper(state.wallpaper === '' ? null : ''),
+  p: () => menuAction('#menu-pin'),
+  s: () => menuAction('#menu-scene'),
+  d: () => menuAction('#menu-save'),
+  e: () => menuAction('#menu-share'),
+  u: () => setUnit(state.unit === 'C' ? 'F' : 'C'),
+};
+
+/* Run a menu item without opening the menu: drop a picture drawn the
+   last time it opened, it may show another hour or place */
+function menuAction(sel) {
+  syncMenu();
+  state.picture = null;
+  $(sel).click();
+}
+
 function toggleClean() {
   setWallpaper(state.wallpaper === null ? 'info' : null);
 }
