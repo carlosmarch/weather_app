@@ -74,7 +74,7 @@ body {
 .is-standalone .search__results { touch-action: pan-y; }
 /* iOS 26 softly blurs the top of an installed app, a little past the
    status bar: drop the top buttons and the search field below it */
-.is-standalone { --top-edge: calc(env(safe-area-inset-top) + 36px); }
+.is-standalone { --top-edge: calc(env(safe-area-inset-top) + 20px); }
 
 button {
   font: inherit;
