@@ -680,8 +680,7 @@ function bindUI() {
         .find(b => samePlace(searchRows[+b.dataset.pin], pin.place));
       same?.focus({ preventScroll: true });
     } else if (go) {
-      if (go.dataset.go === 'locate') { closeSearch(); locate(); }
-      else pickPlace(searchRows[+go.dataset.go]);
+      pickPlace(searchRows[+go.dataset.go]);
     }
   });
   $('#search-close').addEventListener('click', closeSearch);
@@ -829,7 +828,6 @@ function renderExplore(row) {
 }
 
 const ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-1 6 3.5 3.5h-11L10 9.5z"/><path d="M12 13v7.5"/></svg>';
-const ICON_LOCATE = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/><circle cx="12" cy="12" r="7"/></svg>';
 
 let searchRows = [];
 
@@ -858,7 +856,7 @@ function togglePin(place) {
   try { localStorage.setItem('tc-pins', JSON.stringify(pins)); } catch {}
 }
 
-/* list = null: location, pinned places and Explore; otherwise search results */
+/* list = null: pinned places, saved scenes and Explore; otherwise search results */
 function renderSearch(list = null, empty = 'No cities found') {
   const pins = loadPins();
   const rows = [];
@@ -878,7 +876,6 @@ function renderSearch(list = null, empty = 'No cities found') {
 
   let html = '';
   if (list === null) {
-    html += `<li class="place"><button type="button" class="place__go" data-go="locate">${ICON_LOCATE}<span>Use my location</span></button></li>`;
     const pinnedPlaces = pins.filter(p => !p.demo), scenes = pins.filter(p => p.demo).map(sceneRow);
     if (pinnedPlaces.length) html += heading('Pinned') + pinnedPlaces.map(row).join('');
     if (scenes.length) html += heading('Saved scenes') + scenes.map(row).join('');
