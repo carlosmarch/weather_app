@@ -211,8 +211,10 @@ function render() {
   state.rollDir = 0;
   el.date.classList.remove('is-detail');
   rollText(el.date, `${DAYS[local.getUTCDay()]}, ${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]}`, dir);
-  renderTemp(h.temp, dir, h.feels);
-  rollText(el.label, `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°`, dir);
+  renderTemp(h.temp, dir);
+  // "feels like" in brackets, only when wind or humidity make a real difference
+  const feels = feelsDifferent(h.temp, h.feels) ? ` (${toUnit(h.feels)}°)` : '';
+  rollText(el.label, `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°${feels}`, dir);
 
   if (!changed) return;
 
@@ -310,19 +312,15 @@ function makeDayOrNight(isDay, celsius, veiled, halo = 0) {
   el.icon.append(body);
 }
 
-function renderTemp(celsius, dir = 0, feels) {
+function renderTemp(celsius, dir = 0) {
   el.temp.hidden = false;
   let num = el.temp.querySelector('.temp__num');
   if (!num) {
-    el.temp.innerHTML = '<span class="temp__num"></span><sup>°</sup><small></small><span class="temp__feels" hidden></span>';
+    el.temp.innerHTML = '<span class="temp__num"></span><sup>°</sup><small></small>';
     num = el.temp.querySelector('.temp__num');
   }
   rollText(num, String(toUnit(celsius)), dir);
   el.temp.querySelector('small').textContent = state.unit;
-  // "feels like" only when wind or humidity make a real difference
-  const feelsEl = el.temp.querySelector('.temp__feels');
-  feelsEl.hidden = !feelsDifferent(celsius, feels);
-  if (!feelsEl.hidden) feelsEl.textContent = `feels ${toUnit(feels)}°`;
 }
 
 const FEELS_DIFF = 3; // °C

@@ -86,7 +86,7 @@ export async function renderPicture({ sky, sceneCanvas, root }) {
   }
 
   // 4. text, each element where it sits on screen
-  for (const sel of ['#condition', '#temp .temp__num', '#temp sup', '#temp small', '#temp .temp__feels', '#city', '#date',
+  for (const sel of ['#condition', '#temp .temp__num', '#temp sup', '#temp small', '#city', '#date',
                      '#timeline-low', '#timeline-label', '#timeline-high']) {
     const el = root.querySelector(sel);
     if (!el || el.hidden || el.closest('[hidden]')) continue;
