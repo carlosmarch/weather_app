@@ -585,12 +585,16 @@ function bindUI() {
       return;
     }
     if (e.target.closest('input, [role="slider"]')) return;
-    if (e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) { e.preventDefault(); openSearch(); }
-    else if (e.key === 'r') $('#btn-random').click();
-    else if (e.key === '?') location.href = 'how.html';
-    else if (e.key === 'h') toggleClean();
-    else if (e.key === 'ArrowRight' && state.forecast) select(state.selected + 1);
-    else if (e.key === 'ArrowLeft' && state.forecast) select(state.selected - 1);
+    if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openSearch(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const key = e.key.toLowerCase();
+    if (key === '/') { e.preventDefault(); openSearch(); }
+    else if (key === 'r') $('#btn-random').click();
+    else if (key === '?') location.href = 'how.html';
+    else if (key === 'h') toggleClean();
+    else if (key === 'arrowright' && state.forecast) select(state.selected + 1);
+    else if (key === 'arrowleft' && state.forecast) select(state.selected - 1);
+    else if (Object.hasOwn(menuKeys, key)) menuKeys[key]();
   });
 
   // Search: suggestions and pinned places until something is typed
@@ -814,6 +818,25 @@ function bindMenu() {
 
 /* Clean view (?wallpaper=info): only the sky, the circle, the words and
    the bars. A tap turns it on or off, and leaves the sky-only view */
+/* The options menu's keys, shown next to each item */
+const menuKeys = {
+  l: () => $('#menu-locate').click(),
+  w: () => setWallpaper(state.wallpaper === '' ? null : ''),
+  p: () => menuAction('#menu-pin'),
+  s: () => menuAction('#menu-scene'),
+  d: () => menuAction('#menu-save'),
+  e: () => menuAction('#menu-share'),
+  u: () => setUnit(state.unit === 'C' ? 'F' : 'C'),
+};
+
+/* Run a menu item without opening the menu: drop a picture drawn the
+   last time it opened, it may show another hour or place */
+function menuAction(sel) {
+  syncMenu();
+  state.picture = null;
+  $(sel).click();
+}
+
 function toggleClean() {
   setWallpaper(state.wallpaper === null ? 'info' : null);
 }

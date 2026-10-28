@@ -654,6 +654,21 @@ a.menu__item { color: inherit; text-decoration: none; }
 
 .menu__item[disabled] { opacity: 0.4; cursor: default; }
 
+.menu__key {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--glass-stroke);
+  font: 600 11px 'Inter', system-ui, sans-serif;
+  text-align: center;
+  opacity: 0.55;
+}
+
+.menu__row .menu__key { margin-left: 6px; }
+
+@media (hover: none) { .menu__key { display: none; } }
+
 .menu__divider {
   height: 1px;
   margin: 4px 14px;
