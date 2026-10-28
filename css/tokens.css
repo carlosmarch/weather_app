@@ -65,9 +65,9 @@
   --glass-row: rgba(255, 255, 255, 0.08);
   --glass-stroke: rgba(255, 255, 255, 0.16);
   --glass-stroke-strong: rgba(255, 255, 255, 0.45);
-  --glass-sheen: rgba(255, 255, 255, 0.5);      /* bright top rim on the toolbar buttons */
-  --glass-sheen-low: rgba(255, 255, 255, 0.14); /* fainter bottom rim */
-  --glass-shadow: rgba(0, 0, 0, 0.14);          /* lifts the toolbar buttons off the sky */
+  --tool-glass: rgba(255, 255, 255, 0.05);        /* faint pane behind the toolbar icons */
+  --tool-glass-stroke: rgba(255, 255, 255, 0.14); /* hairline rim */
+  --glass-sheen: rgba(255, 255, 255, 0.16);       /* light top edge */
   --on-glass: var(--white);
   --on-glass-soft: rgba(255, 255, 255, 0.55);
   --on-glass-placeholder: rgba(255, 255, 255, 0.45);
