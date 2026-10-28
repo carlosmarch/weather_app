@@ -171,7 +171,12 @@ button {
   transition: background-color 0.2s ease;
 }
 
-.tool:hover { background: var(--ink-faint); }
+/* Hover only where there is a pointer: on touch screens it sticks after a
+   tap and leaves a grey circle behind the button */
+@media (hover: hover) {
+  .tool:hover { background: var(--ink-faint); }
+  .tool:hover svg { stroke-opacity: 1; }
+}
 
 /* Dim the stroke rather than the button: opacity below 1 puts the button
    in its own layer, which Safari rasterises soft and the icons look blurred */
@@ -187,7 +192,6 @@ button {
   stroke-linejoin: round;
 }
 
-.tool:hover svg,
 .tool:active svg { stroke-opacity: 1; }
 
 /* ======================================================================
