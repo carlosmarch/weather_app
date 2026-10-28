@@ -212,9 +212,9 @@ function render() {
   el.date.classList.remove('is-detail');
   rollText(el.date, `${DAYS[local.getUTCDay()]}, ${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]}`, dir);
   renderTemp(h.temp, dir);
-  // "feels like" in brackets, only when wind or humidity make a real difference
-  const feels = feelsDifferent(h.temp, h.feels) ? ` (${toUnit(h.feels)}°)` : '';
-  rollText(el.label, `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°${feels}`, dir);
+  // the temperature is the big number above; the bar shows what it feels like
+  const feels = hasFeels(h) ? ` · ${toUnit(h.feels)}°` : '';
+  rollText(el.label, `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`}${feels}`, dir);
 
   if (!changed) return;
 
@@ -323,9 +323,9 @@ function renderTemp(celsius, dir = 0) {
   el.temp.querySelector('small').textContent = state.unit;
 }
 
-const FEELS_DIFF = 3; // °C
-function feelsDifferent(celsius, feels) {
-  return typeof feels === 'number' && Number.isFinite(feels) && Math.abs(feels - celsius) >= FEELS_DIFF;
+// demos and older saved scenes have no "feels like"
+function hasFeels(h) {
+  return typeof h.feels === 'number' && Number.isFinite(h.feels);
 }
 
 function toUnit(celsius) {
@@ -468,7 +468,7 @@ function markSelected() {
   el.track.setAttribute('aria-valuenow', state.selected);
   const h = state.forecast.hours[state.selected];
   const degrees = `${toUnit(h.temp)} degrees ${state.unit === 'F' ? 'Fahrenheit' : 'Celsius'}`;
-  const feels = feelsDifferent(h.temp, h.feels) ? `, feels like ${toUnit(h.feels)}` : '';
+  const feels = hasFeels(h) ? `, feels like ${toUnit(h.feels)}` : '';
   el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${degrees}${feels}, ${getCondition(h.code, h.wind, h.data).label}`);
 }
 
