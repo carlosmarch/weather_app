@@ -8,7 +8,7 @@
 
 import { getForecast, getNowMany, reverseGeocode, searchCity, getPosition } from './weather.js';
 import { getCondition, weatherMarks, iceHalo, CODES } from './conditions.js';
-import { skyColors, sunIntensity, starsByHour, luminance, mix } from './palette.js';
+import { skyColors, sunIntensity, starsByHour, isDayHour, luminance, mix } from './palette.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
 import { renderPicture } from './picture.js';
@@ -457,7 +457,8 @@ function markSelected() {
   [...el.track.children].forEach((b, i) => b.classList.toggle('is-selected', i === state.selected));
   el.track.setAttribute('aria-valuenow', state.selected);
   const h = state.forecast.hours[state.selected];
-  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${Math.round(h.temp)} degrees, ${getCondition(h.code, h.wind, h.data).label}`);
+  const degrees = `${toUnit(h.temp)} degrees ${state.unit === 'F' ? 'Fahrenheit' : 'Celsius'}`;
+  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${degrees}, ${getCondition(h.code, h.wind, h.data).label}`);
 }
 
 /* Dock-style magnification: bars near the pointer grow taller and wider,
@@ -726,7 +727,10 @@ function togglePin(place) {
   const pins = loadPins();
   const i = pins.findIndex(p => samePlace(p, place));
   if (i >= 0) pins.splice(i, 1);
-  else if (place.demo) pins.push({ name: place.name, region: place.region, label: place.label, demo: place.demo, from: place.from, to: place.to });
+  else if (place.demo) {
+    const { name, region, label, demo, from, to, forecast, selected, time, temp, cond } = place;
+    pins.push({ name, region, label, demo, from, to, forecast, selected, time, temp, cond });
+  }
   else pins.push({ name: place.name, region: place.region, label: place.label, lat: place.lat, lon: place.lon });
   try { localStorage.setItem('tc-pins', JSON.stringify(pins)); } catch {}
 }
@@ -752,7 +756,7 @@ function renderSearch(list = null, empty = 'No cities found') {
   let html = '';
   if (list === null) {
     html += `<li class="place"><button type="button" class="place__go" data-go="locate">${ICON_LOCATE}<span>Use my location</span></button></li>`;
-    const pinnedPlaces = pins.filter(p => !p.demo), scenes = pins.filter(p => p.demo);
+    const pinnedPlaces = pins.filter(p => !p.demo), scenes = pins.filter(p => p.demo).map(sceneRow);
     if (pinnedPlaces.length) html += heading('Pinned') + pinnedPlaces.map(row).join('');
     if (scenes.length) html += heading('Saved scenes') + scenes.map(row).join('');
     html += renderExplore(row);
@@ -765,10 +769,18 @@ function renderSearch(list = null, empty = 'No cities found') {
   el.searchResults.querySelectorAll('[data-pin]').forEach(b => { b.place = rows[+b.dataset.pin]; });
 }
 
+/* A saved scene's line in search, in the current unit (older scenes
+   saved the text, in the unit of the day) */
+function sceneRow(p) {
+  if (typeof p.temp !== 'number') return p;
+  return { ...p, region: `${p.time} · ${toUnit(p.temp)}°${state.unit} · ${p.cond}` };
+}
+
 function pickPlace(place) {
   closeSearch();
   if (place.demo) {
     writeURL(new URLSearchParams(`demo&${place.demo}`));
+    if (place.forecast) return openScene(place);
     return startDemo(new URLSearchParams(place.demo));
   }
   loadPlace({ lat: place.lat, lon: place.lon, label: place.label });
@@ -848,7 +860,9 @@ function syncMenu() {
 function setUnit(unit) {
   state.unit = unit;
   try { localStorage.setItem('tc-unit', unit); } catch {}
-  if (state.forecast) { render(); renderRange(); }
+  if (state.forecast) { render(); renderRange(); markSelected(); }
+  // saved scenes in the open search list show their temperature too
+  if (!el.search.hidden && el.searchInput.value.trim().length < 2) renderSearch();
   syncMenu();
 }
 
@@ -906,7 +920,9 @@ async function savePicture() {
 }
 
 /* Save as scene: keep this scene (place, weather, hour, amounts) as a
-   demo that can be reopened from the pins in search */
+   demo that can be reopened from the pins in search. The whole forecast
+   goes with it so the timeline reopens as it was; the URL params are the
+   fallback for older pins and shared links */
 function saveScene() {
   const h = state.forecast.hours[state.selected];
   const { local, hour, cond, timeColor, tempColor } = skyFor(h, state.forecast.offset);
@@ -924,13 +940,25 @@ function saveScene() {
   const time = `${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
   const scene = {
     name: city,
-    region: `${time} · ${toUnit(h.temp)}° · ${cond.label}`,
+    time, temp: h.temp, cond: cond.label,
     label: state.place.label,
     demo, from: timeColor, to: tempColor,
+    forecast: frozenForecast(), selected: state.selected,
   };
   if (isPinned(scene)) return toast('Already saved');
   togglePin(scene);
   toast('Scene saved · find it in search');
+}
+
+// The forecast as saved: "now" becomes the moment it was saved
+function frozenForecast() {
+  const { offset, hours } = state.forecast;
+  const saved = Math.floor(Date.now() / 1000);
+  return { offset, hours: hours.map(({ isNow, ...h }) => (isNow ? { ...h, time: saved } : h)) };
+}
+
+function openScene({ forecast, selected = 0, label }) {
+  showScene({ forecast, selected: Math.min(selected, forecast.hours.length - 1), label, saved: true });
 }
 
 async function share() {
@@ -976,6 +1004,15 @@ function toast(msg, ms = 3500) {
    Fake data, no network - successor of the old initDevelopment()
    ====================================================================== */
 function startDemo(params) {
+  // a saved scene reopened from its link: use its forecast if it's pinned here
+  if (params.get('saved') === '1') {
+    const key = new URLSearchParams(params);
+    key.delete('demo');
+    key.delete('wallpaper');
+    key.sort();
+    const pin = loadPins().find(p => p.demo === key.toString());
+    if (pin?.forecast) return openScene(pin);
+  }
   const num = (k, d) => (params.has(k) ? parseFloat(params.get(k)) : d);
   const c = cities[Math.floor(Math.random() * cities.length)];
   buildDemo({
@@ -1002,10 +1039,7 @@ function buildDemo({ code, temp, hour, wind, data = {}, day, saved = false, labe
   const deviceHour = d.getUTCHours() + d.getUTCMinutes() / 60;
   const offset = Math.round((hour - deviceHour) * 3600);
   const startHour = Math.floor((nowUtc / 1000 + 3600) / 3600) * 3600;
-  const isDayAt = t => {
-    const lh = new Date((t + offset) * 1000).getUTCHours();
-    return lh >= 7 && lh < 20;
-  };
+  const isDayAt = t => isDayHour(new Date((t + offset) * 1000).getUTCHours());
 
   const hours = [{ time: Math.floor(nowUtc / 1000), temp, code, isDay: day ?? isDayAt(nowUtc / 1000), wind, data, isNow: true }];
   for (let i = 0; i < 24; i++) {
@@ -1020,12 +1054,18 @@ function buildDemo({ code, temp, hour, wind, data = {}, day, saved = false, labe
       wind,
     });
   }
+  showScene({ forecast: { offset, hours }, selected: 0, label, saved });
+}
+
+function showScene({ forecast, selected, label, saved }) {
+  // a scene is fixed: the live place's refresh must not replace it
+  clearInterval(state.refreshTimer);
   state.demo = saved ? 'saved' : true;
   document.body.classList.toggle('is-demo', !saved);
   el.domlog.hidden = true;
   state.place = { lat: 0, lon: 0, label };
-  state.forecast = { offset, hours };
-  state.selected = 0;
+  state.forecast = forecast;
+  state.selected = selected;
   state.lastKey = '';
   el.retry.hidden = true;
   buildTimeline();

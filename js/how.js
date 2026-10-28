@@ -1,7 +1,7 @@
 /* "How it works" page: every demo is drawn with the app's own code
    (palette, conditions, scene), so it always matches the app. */
 
-import { colorByCelsius, colorByHour, skyColors, mix, luminance, sunIntensity, SUN_STEPS, token } from './palette.js';
+import { colorByCelsius, colorByHour, skyColors, mix, luminance, sunIntensity, starsByHour, isDayHour, SUN_STEPS, token } from './palette.js';
 import { getCondition, weatherMarks, iceHalo, STEPS, CALM_WIND, MIST_VISIBILITY } from './conditions.js';
 import { createScene } from './scene.js';
 import { rollText } from './roll.js';
@@ -18,7 +18,7 @@ $('#back').addEventListener('click', e => {
 });
 
 /* Same recipe as the app's skyFor() */
-function sky(hour, temp, code = 0, wind = 10, data = {}, isDay = hour >= 7 && hour < 19) {
+function sky(hour, temp, code = 0, wind = 10, data = {}, isDay = isDayHour(hour)) {
   const cond = getCondition(code, wind, data);
   const { timeColor, tempColor } = skyColors({ hour, temp, isDay, fx: cond.fx });
   const ink = luminance(mix(timeColor, tempColor)) > 0.55 ? token('--ink-dark') : token('--ink-light');
@@ -90,7 +90,9 @@ function tile({ hour, temp, code = 0, wind = 10, data = {}, title, sub, live = f
       for (const k of ['rain', 'snow', 'wind']) if (fx[k]) fx[k] = Math.ceil(fx[k] / 2);
       if (fx.clouds) fx.clouds = Math.ceil(fx.clouds / 2);
       scene.pause();
-      scene.set({ fx, stars: s.isDay ? 0 : 40, timeColor: s.timeColor });
+      // same stars as the app's render()
+      const stars = s.isDay ? 0 : starsByHour(hour) || 40;
+      scene.set({ fx, stars: s.cond.fx.clouds > 10 ? stars / 4 : stars, timeColor: s.timeColor });
       t.scene = scene;
       visible.observe(t);
     });
@@ -209,7 +211,7 @@ const tlow = Math.min(...day.map(d => d[2])), thigh = Math.max(...day.map(d => d
 const n = day.length;
 const nightStops = [];
 day.forEach(([hour, code, temp], i) => {
-  const isDay = hour >= 7 && hour < 19;
+  const isDay = isDayHour(hour);
   const s = sky(hour, temp, code, 10, {}, isDay);
   const bar = document.createElement('div');
   bar.className = 'bar';
@@ -224,7 +226,7 @@ day.forEach(([hour, code, temp], i) => {
   }
   track.append(bar);
   nightStops.push(`${isDay ? 'transparent' : token('--ink-faint')} ${(i / n * 100).toFixed(2)}% ${((i + 1) / n * 100).toFixed(2)}%`);
-  const prevDay = i === 0 ? true : day[i - 1][0] >= 7 && day[i - 1][0] < 19;
+  const prevDay = i === 0 ? true : isDayHour(day[i - 1][0]);
   if (!isDay && prevDay) mark('moon', i);
   if (isDay && i > 0 && !prevDay) mark('sun', i);
 });
