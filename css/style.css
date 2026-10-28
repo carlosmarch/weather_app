@@ -63,8 +63,10 @@ body {
 
 /* Installed iOS app: iOS doesn't paint fixed elements below the short
    viewport it reports, so make the page itself screen-tall and place the
-   app in it instead of pinning it to the viewport */
-.is-standalone { height: var(--app-h, 100%); }
+   app in it instead of pinning it to the viewport. The page must not
+   scroll, though: on a scrollable page iOS 26 lays a blurred band under
+   the status bar, over the top buttons */
+.is-standalone { height: var(--app-h, 100%); overflow: hidden; }
 .is-standalone body { overflow: visible; touch-action: none; }
 .is-standalone .app { position: absolute; }
 .is-standalone .search__results { touch-action: pan-y; }
