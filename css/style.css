@@ -151,6 +151,7 @@ button {
 .is-wallpaper .timeline,
 .is-wallpaper .menu,
 .is-wallpaper .toast,
+.is-wallpaper .sheet,
 .is-wallpaper .domlog,
 .is-wallpaper .text-top,
 .is-wallpaper .text-bottom,
@@ -708,6 +709,98 @@ a.menu__item { color: inherit; text-decoration: none; }
 @keyframes menuIn {
   from { opacity: 0; transform: translateY(-6px) scale(0.96); }
   to   { opacity: 1; transform: none; }
+}
+
+/* ======================================================================
+   EXTREMES SHEET (long press on the dice)
+   ====================================================================== */
+#btn-random {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.sheet[hidden] { display: none; }
+
+.sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--backdrop);
+  animation: fadeIn 0.25s ease both;
+}
+
+.sheet__panel {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(480px, 100%);
+  transform: translateX(-50%);
+  padding: 8px var(--gutter) max(20px, env(safe-area-inset-bottom));
+  border-radius: 26px 26px 0 0;
+  background: var(--scrim);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: inset 0 1px 0 var(--glass-stroke);
+  color: var(--on-glass);
+  text-shadow: none;
+  animation: sheetIn 0.32s var(--ease) both;
+}
+
+.sheet__grip {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 14px;
+  border-radius: 2px;
+  background: var(--glass-stroke-strong);
+}
+
+.sheet__title {
+  margin: 0 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--on-glass-soft);
+}
+
+.sheet__options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.sheet__option {
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sheet__option:hover,
+.sheet__option:focus-visible {
+  outline: none;
+  background: var(--glass-hover);
+  box-shadow: inset 0 0 0 1px var(--glass-stroke-strong);
+}
+
+.sheet__option[disabled] { opacity: 0.4; cursor: default; }
+
+@keyframes sheetIn {
+  from { transform: translate(-50%, 100%); }
+  to   { transform: translate(-50%, 0); }
 }
 
 /* ======================================================================

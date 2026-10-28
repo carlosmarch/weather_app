@@ -41,7 +41,7 @@
       </button>
     </div>
     <div class="toolbar__right">
-      <button class="tool" id="btn-random" type="button" aria-label="Random extreme weather" title="Random extreme weather">
+      <button class="tool" id="btn-random" type="button" aria-label="Random extreme weather" title="Random extreme weather (hold to choose)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3.5c4.5 0 6.5 10 11 10H21M3 17h3.5c1.6 0 2.8-1.3 3.8-3M14 10c1-1.7 2.2-3 3.8-3H21M18.5 4.5L21 7l-2.5 2.5M18.5 14.5L21 17l-2.5 2.5"/></svg>
       </button>
       <button class="tool" id="btn-menu" type="button" aria-label="Options" title="Options" aria-haspopup="menu" aria-expanded="false" aria-controls="menu">
@@ -133,6 +133,15 @@
       </button>
     </form>
     <ul class="search__results" id="search-results"></ul>
+  </div>
+
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet__backdrop" id="sheet-backdrop"></div>
+    <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <h2 class="sheet__title" id="sheet-title">Random extreme</h2>
+      <div class="sheet__options" id="sheet-options"></div>
+    </div>
   </div>
 
   <div class="toast" id="toast" role="status" hidden></div>

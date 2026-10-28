@@ -76,4 +76,5 @@
   /* ---- Overlays ---- */
   --scrim: rgba(20, 20, 20, 0.55);   /* behind search */
   --toast: rgba(0, 0, 0, 0.45);
+  --backdrop: rgba(0, 0, 0, 0.3);   /* behind the bottom sheet */
 }
