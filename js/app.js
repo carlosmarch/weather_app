@@ -211,7 +211,7 @@ function render() {
   state.rollDir = 0;
   el.date.classList.remove('is-detail');
   rollText(el.date, `${DAYS[local.getUTCDay()]}, ${local.getUTCDate()} ${MONTHS[local.getUTCMonth()]}`, dir);
-  renderTemp(h.temp, dir);
+  renderTemp(h.temp, dir, h.feels);
   rollText(el.label, `${h.isNow ? 'Now' : `${pad(local.getUTCHours())}:00`} · ${toUnit(h.temp)}°`, dir);
 
   if (!changed) return;
@@ -310,15 +310,24 @@ function makeDayOrNight(isDay, celsius, veiled, halo = 0) {
   el.icon.append(body);
 }
 
-function renderTemp(celsius, dir = 0) {
+function renderTemp(celsius, dir = 0, feels) {
   el.temp.hidden = false;
   let num = el.temp.querySelector('.temp__num');
   if (!num) {
-    el.temp.innerHTML = '<span class="temp__num"></span><sup>°</sup><small></small>';
+    el.temp.innerHTML = '<span class="temp__num"></span><sup>°</sup><small></small><span class="temp__feels" hidden></span>';
     num = el.temp.querySelector('.temp__num');
   }
   rollText(num, String(toUnit(celsius)), dir);
   el.temp.querySelector('small').textContent = state.unit;
+  // "feels like" only when wind or humidity make a real difference
+  const feelsEl = el.temp.querySelector('.temp__feels');
+  feelsEl.hidden = !feelsDifferent(celsius, feels);
+  if (!feelsEl.hidden) feelsEl.textContent = `feels ${toUnit(feels)}°`;
+}
+
+const FEELS_DIFF = 3; // °C
+function feelsDifferent(celsius, feels) {
+  return typeof feels === 'number' && Number.isFinite(feels) && Math.abs(feels - celsius) >= FEELS_DIFF;
 }
 
 function toUnit(celsius) {
@@ -461,7 +470,8 @@ function markSelected() {
   el.track.setAttribute('aria-valuenow', state.selected);
   const h = state.forecast.hours[state.selected];
   const degrees = `${toUnit(h.temp)} degrees ${state.unit === 'F' ? 'Fahrenheit' : 'Celsius'}`;
-  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${degrees}, ${getCondition(h.code, h.wind, h.data).label}`);
+  const feels = feelsDifferent(h.temp, h.feels) ? `, feels like ${toUnit(h.feels)}` : '';
+  el.track.setAttribute('aria-valuetext', `${state.selected === 0 ? 'now' : `in ${state.selected} hours`}, ${degrees}${feels}, ${getCondition(h.code, h.wind, h.data).label}`);
 }
 
 /* Dock-style magnification: bars near the pointer grow taller and wider,

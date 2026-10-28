@@ -13,7 +13,7 @@ export async function getForecast(lat, lon) {
     latitude: lat,
     longitude: lon,
     current: 'temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m',
-    hourly: 'temperature_2m,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility,' +
+    hourly: 'temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m,wind_gusts_10m,rain,showers,snowfall,visibility,' +
       'cloud_cover,cloud_cover_low,cloud_cover_mid',
     daily: 'sunrise,sunset',
     forecast_days: 2,
@@ -59,6 +59,7 @@ export async function getForecast(lat, lon) {
     hours.push({
       time: h.time[i],
       temp: h.temperature_2m[i],
+      feels: at('apparent_temperature', i),
       code: h.weather_code[i],
       isDay: !!h.is_day[i],
       wind: h.wind_speed_10m[i],

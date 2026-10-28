@@ -166,7 +166,7 @@ const CLOUDS = [
   { code: 2, cloud: 50, title: 'Partly cloudy', sub: '50%' },
   { code: 3, cloud: 75, title: 'Mostly cloudy', sub: '75%' },
   { code: 3, cloud: 100, title: 'Overcast', sub: '100% · veiled sun' },
-  { code: 3, cloud: 100, lowCloud: 10, title: 'High cloud', sub: '100%, thin · sun shines' },
+  { code: 3, cloud: 100, lowCloud: 10, title: 'High cloud', sub: '100% · sun shines' },
 ];
 $('#demo-clouds').append(...CLOUDS.map(c => tile({
   hour: 13, temp: 20, code: c.code, data: { cloud: c.cloud, lowCloud: c.lowCloud ?? c.cloud },

@@ -263,7 +263,8 @@ button {
   margin-left: 2px;
 }
 
-.temperature small {
+.temperature small,
+.temperature .temp__feels {
   font-size: 0.24em;
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -271,6 +272,20 @@ button {
   margin-left: 2px;
   color: var(--ink-soft);
 }
+
+/* beside the number, under the unit, out of the flow so the
+   number stays centred and nothing jumps */
+.temperature { position: relative; }
+.temperature .temp__feels {
+  position: absolute;
+  left: calc(100% - 8px);
+  bottom: 0.5em;
+  font-size: 0.2em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.temperature .temp__feels[hidden] { display: none; }
 
 .animate-in { animation: fadeInUp 0.9s var(--ease) both; }
 .animate-down { animation: fadeInDown 0.9s var(--ease) both; }
