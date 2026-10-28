@@ -4,7 +4,7 @@
  * Fonts: cache first, refreshed in the background (they never change).
  * Weather API: network first, last response as offline fallback.
  */
-const VERSION = 'huecast-v3.21.10';
+const VERSION = 'huecast-v3.21.11';
 const SHELL = [
   './',
   'index.html',
