@@ -40,7 +40,7 @@ Geolocation needs `localhost` or HTTPS.
 
 - `?lat=40.4&lon=-3.7&name=Madrid` opens a fixed place (search and the dice set this, so links can be shared)
 - `?city=random` opens a random capital city
-- `?wallpaper` shows only the sky and the sun or moon, with no buttons, text or forecast bar (also **Options → Wallpaper**; tap to go back). Add it to any of the other options (e.g. `?lat=40.4&lon=-3.7&name=Madrid&wallpaper`) and use it as a macOS desktop background with [Plash](https://sindresorhus.com/plash). Use a fixed place, because wallpaper apps usually can't ask for your location
+- `?wallpaper` shows only the sky and the sun or moon, with no buttons, text or forecast bar (also **Options → Wallpaper**, or long press the sky; tap or long press to go back). Add it to any of the other options (e.g. `?lat=40.4&lon=-3.7&name=Madrid&wallpaper`) and use it as a macOS desktop background with [Plash](https://sindresorhus.com/plash). Use a fixed place, because wallpaper apps usually can't ask for your location
 - `?wallpaper=info` is the clean view you get by tapping the sky: the weather, temperature, place and forecast bars stay, the buttons and the low · now · high row are hidden. Tapping adds or removes it from the URL
 - `?demo` uses fake data with no network calls (the old development mode). You can pin values, e.g. `?demo&code=95&temp=24&hour=22&wind=40`. `code` is a [WMO weather code](https://open-meteo.com/en/docs#weather_variable_documentation).
 

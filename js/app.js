@@ -583,11 +583,37 @@ function bindUI() {
   // low · now · high row; a tap that closes the menu or search doesn't count
   let overlayOpen = false;
   const anyOpen = () => !el.menu.hidden || !el.search.hidden || !el.sheet.hidden;
+  const controls = 'button, a, input, .timeline, .menu, .search, .sheet, .toast, .retry';
   el.app.addEventListener('pointerdown', () => { overlayOpen = anyOpen(); }, true);
   el.app.addEventListener('click', e => {
+    if (held) { held = false; return; }
     if (overlayOpen || anyOpen()) return;
-    if (e.target.closest('button, a, input, .timeline, .menu, .search, .sheet, .toast, .retry')) return;
+    if (e.target.closest(controls)) return;
     toggleClean();
+  });
+
+  // Long press the screen (not a control) to turn wallpaper mode on or off;
+  // moving the finger or a second finger cancels it
+  let pressTimer = 0, held = false, start = null;
+  const cancel = () => { clearTimeout(pressTimer); start = null; };
+  el.app.addEventListener('pointerdown', e => {
+    held = false;
+    cancel();
+    if (e.button || !e.isPrimary || anyOpen() || e.target.closest(controls)) return;
+    start = { x: e.clientX, y: e.clientY };
+    pressTimer = setTimeout(() => {
+      held = true;
+      start = null;
+      setWallpaper(state.wallpaper === '' ? null : '');
+    }, 600);
+  });
+  el.app.addEventListener('pointermove', e => {
+    if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) cancel();
+  });
+  for (const type of ['pointerup', 'pointercancel']) el.app.addEventListener(type, cancel);
+  // touch browsers open a context menu on a long press
+  el.app.addEventListener('contextmenu', e => {
+    if (start || held) e.preventDefault();
   });
 
   // Global shortcuts
