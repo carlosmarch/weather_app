@@ -853,7 +853,8 @@ a.menu__item { color: inherit; text-decoration: none; }
   gap: 8px;
   width: 100%;
   max-width: 520px;
-  margin-top: clamp(8px, 8vh, 96px);
+  /* on the toolbar's row: the 48px field centred on the 44px buttons */
+  margin-top: -2px;
   animation: fadeInDown 0.4s var(--ease) both;
 }
 
