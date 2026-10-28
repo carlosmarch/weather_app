@@ -70,10 +70,12 @@ export function createScene(canvas, getAnchor) {
       const k = 0.75 + (state.fx.rainLevel || 3) * 0.1;
       return { x: rand(-W * 0.3, W), y: rand(-H, H), len: rand(5, 11) * k, v: rand(900, 1500) * k };
     },
-    // heavier snow: bigger flakes
+    // heavier snow: bigger flakes, and heavy / blizzard fall faster
     snow: () => {
-      const k = 0.8 + (state.fx.snowLevel || 3) * 0.1;
-      return { x: rand(0, W), y: rand(-H, H), r: rand(0.5, 2.2) * k, v: rand(35, 90), phase: rand(0, Math.PI * 2) };
+      const lvl = state.fx.snowLevel || 3;
+      const k = 0.8 + lvl * 0.1;
+      const fast = 1 + Math.max(0, lvl - 3) * 0.25;
+      return { x: rand(0, W), y: rand(-H, H), r: rand(0.5, 2.2) * k, v: rand(35, 90) * fast, phase: rand(0, Math.PI * 2) };
     },
     wind: () => ({ x: rand(-W, W), y: rand(0, H), len: rand(40, 130), v: rand(500, 1100), a: rand(0.06, 0.18) }),
   };

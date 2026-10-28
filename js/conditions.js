@@ -52,8 +52,8 @@ export const STEPS = {
     { name: 'Flurries', max: 0.2,      flakes: 25,  clouds: 5,  lift: 0.06 },
     { name: 'Light',    max: 1,        flakes: 50,  clouds: 8,  lift: 0.12 },
     { name: 'Moderate', max: 2.5,      flakes: 90,  clouds: 11, lift: 0.18 },
-    { name: 'Heavy',    max: 5,        flakes: 140, clouds: 14, lift: 0.24 },
-    { name: 'Blizzard', max: Infinity, flakes: 200, clouds: 15, lift: 0.3, wind: 4 },
+    { name: 'Heavy',    max: 5,        flakes: 240, clouds: 14, lift: 0.24 },
+    { name: 'Blizzard', max: Infinity, flakes: 360, clouds: 15, lift: 0.3, wind: 4 },
   ] },
   // visibility in metres: lower is thicker, so steps go from clear to dense
   fog: { unit: 'visibility', steps: [
